@@ -39,14 +39,11 @@ sheet:
   exactly; Mark and Jim differ by 2 points each (exactly a 1st/2nd swap for
   that one week).
 
-**This needs your call**: was the sheet's week 13 result a manual entry
-mistake (engine's version, Jim 1st, is correct), or is there a rule nuance
-I'm missing that should let Mark keep 1st there? Either way, this is the
-last open question before the engine is "final" — happy to hardcode either
-behavior once you confirm.
+**Resolved**: confirmed with the user — this was a manual entry mistake
+in the sheet. Jim should have won week 13, and that's the behavior the
+engine locks in (see the regression test).
 
 ## What's next (not yet built)
-- Scores API integration for auto-pulling final results
 - React UI (pick submission, results, leaderboard)
 - Deploy to Vercel
 
@@ -72,5 +69,23 @@ line specifically.
 share this repo publicly with it inline — when we get to the Vercel
 deploy step, it should go in as an environment variable
 (e.g. `ODDS_API_KEY`) instead of being hardcoded anywhere.
+
+## Step 3 — Scores integration (done)
+
+`src/scoresApi.js` pulls final scores from the **same Odds API
+provider/key** used in Step 2 — no second API needed. Uses
+`/v4/sports/americanfootball_nfl/scores?daysFrom=3`, which returns
+completed games from the last 3 days (2 credits/call).
+
+- Reuses `findSeahawksGame` from `oddsApi.js` rather than duplicating
+  the lookup logic.
+- `extractSeahawksResult` returns `hawksScore`/`oppScore` as `null`
+  until the game is marked `completed`, so the app can distinguish
+  "not played yet" from "played, waiting on data."
+- **Verified live** against the real key: 200 OK, correctly showed
+  `completed: true` for the Seahawks' most recent game, cost 2 credits
+  (496/500 remaining afterward).
+- Combined weekly odds + scores usage is ~4 credits/week — comfortably
+  under the 500/month free allowance for the whole season.
 
 
