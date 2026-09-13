@@ -16,6 +16,23 @@
  *  - Standings points: 1st = 3, 2nd = 1, 3rd = 0.
  */
 
+/**
+ * Infers Over/Under from a picked score against the game's total line —
+ * this was previously a separate manual toggle, but it's fully determined
+ * by the predicted score plus the line, so there's no independent
+ * decision for the player to make.
+ *
+ * @param {{hawks:number, opp:number}} picked
+ * @param {number|null|undefined} lineTotal - the game's total line (e.g. 44.5)
+ * @returns {"Over"|"Under"|"Push"|null} null if no line is available yet
+ */
+export function inferOverUnder(picked, lineTotal) {
+  if (lineTotal == null) return null;
+  const predictedTotal = picked.hawks + picked.opp;
+  if (predictedTotal === lineTotal) return "Push"; // only possible with a whole-number line
+  return predictedTotal > lineTotal ? "Over" : "Under";
+}
+
 export const STANDINGS_POINTS = { 1: 3, 2: 1, 3: 0 };
 
 /**

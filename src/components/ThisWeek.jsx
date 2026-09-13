@@ -88,6 +88,7 @@ export default function ThisWeek({
         displayName={me.displayName}
         existingPick={weekPicks[me.id]}
         locked={locked}
+        gameTotal={game?.total ?? null}
         onSave={(pick) => onSavePick({ week, ...pick })}
       />
 

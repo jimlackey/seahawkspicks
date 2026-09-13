@@ -55,6 +55,20 @@ enforces the rule consistently and does NOT special-case Week 13 — if a
 future session sees the engine's output not match old sheet totals for
 that week, that's expected and correct, not a bug.
 
+**Over/Under is inferred, not manually picked.** `inferOverUnder` in
+`src/lib/scoring.js` compares predicted total (hawks + opp) to the
+game's total line — no separate UI toggle. Returns `"Push"` on an exact
+tie, `null` if no line has been synced yet. `picks.ou_pick` in the DB is
+nullable and allows `'Push'` for this reason (originally `not null
+check (... in ('Over','Under'))`, copied from the original sheet's
+manual toggle; loosened once the toggle was removed — if a fresh
+Supabase project still has the old constraint, run: `alter table picks
+alter column ou_pick drop not null; alter table picks drop constraint
+picks_ou_pick_check; alter table picks add constraint
+picks_ou_pick_check check (ou_pick in ('Over','Under','Push'));`).
+**Not used by the scoring engine at all** — `scoreWeek`/`rankWeek` only
+look at the predicted score — so it's informational only.
+
 ---
 
 ## 3. External APIs
@@ -126,6 +140,19 @@ anyone can log in, and the first participant to log in must be manually
 promoted to `role = 'admin'` via raw SQL before the Admin tab is usable.
 Exact statements are in `README.md` under Step 5. This is a one-time
 chicken-and-egg cost, not a bug.
+
+**Already hit this exact issue once**: if a Supabase project had the old
+Step 4 schema (no `pool_id`/`participant_id`) run against it before the
+current schema.sql, `games`/`picks` already exist with the old shape,
+and `create table if not exists` silently no-ops instead of adding the
+new columns — surfaces later as a PostgREST error like "Could not find
+the 'pool_id' column of 'games' in the schema cache" when the app tries
+to write. Diagnose with `select column_name from information_schema.
+columns where table_name = 'games'` (or `'picks'`); fix (safe when no
+real data is at stake yet) is `drop table if exists picks cascade; drop
+table if exists games cascade;` then re-run the full current schema.sql
+— everything else in it is idempotent, so re-running the whole file is
+safe and only recreates the two dropped tables.
 
 ---
 

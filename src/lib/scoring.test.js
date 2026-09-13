@@ -6,7 +6,26 @@ import {
   scoreWeek,
   rankWeek,
   computeSeasonStandings,
+  inferOverUnder,
 } from "./scoring.js";
+
+test("inferOverUnder: predicted total above the line is Over", () => {
+  assert.equal(inferOverUnder({ hawks: 27, opp: 20 }, 44.5), "Over");
+});
+
+test("inferOverUnder: predicted total below the line is Under", () => {
+  assert.equal(inferOverUnder({ hawks: 17, opp: 13 }, 44.5), "Under");
+});
+
+test("inferOverUnder: exact tie on a whole-number line is a Push", () => {
+  assert.equal(inferOverUnder({ hawks: 24, opp: 20 }, 44), "Push");
+});
+
+test("inferOverUnder: no line available yet returns null", () => {
+  assert.equal(inferOverUnder({ hawks: 24, opp: 20 }, null), null);
+  assert.equal(inferOverUnder({ hawks: 24, opp: 20 }, undefined), null);
+});
+
 
 test("computeDiff sums absolute score errors", () => {
   assert.equal(computeDiff({ hawks: 17, opp: 16 }, { hawks: 10, opp: 31 }), 22);

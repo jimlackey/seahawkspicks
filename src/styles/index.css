@@ -192,28 +192,10 @@ button {
   font-weight: 700;
 }
 
-.ou-toggle {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-.ou-toggle button {
-  flex: 1;
-  padding: 6px 0;
-  border: 1px solid var(--grey-light);
-  background: var(--paper);
-  border-radius: 4px;
+.ou-inferred {
   font-size: 13px;
-  font-weight: 600;
   color: var(--grey);
-  cursor: pointer;
-}
-
-.ou-toggle button.selected {
-  border-color: var(--navy);
-  color: var(--navy);
-  background: #eef1ee;
+  margin-bottom: 12px;
 }
 
 .save-btn {

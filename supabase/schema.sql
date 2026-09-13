@@ -119,7 +119,10 @@ create table if not exists picks (
   participant_id uuid not null references participants(id) on delete cascade,
   hawks_score int not null,
   opp_score int not null,
-  ou_pick text not null check (ou_pick in ('Over', 'Under')),
+  -- Inferred from the picked score vs. the game's total line (see
+  -- inferOverUnder in src/lib/scoring.js) — not a separate manual choice,
+  -- so it's nullable (no line synced yet) and allows 'Push' (exact tie).
+  ou_pick text check (ou_pick in ('Over', 'Under', 'Push')),
   submitted_at timestamptz not null default now(),
   unique (pool_id, season, week, participant_id)
 );
