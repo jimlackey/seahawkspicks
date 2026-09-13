@@ -1,0 +1,22 @@
+const BASE_TABS = [
+  { id: "week", label: "This Week" },
+  { id: "results", label: "Results" },
+  { id: "standings", label: "Standings" },
+];
+
+export default function TabBar({ active, onChange, isAdmin }) {
+  const tabs = isAdmin ? [...BASE_TABS, { id: "admin", label: "Admin" }] : BASE_TABS;
+  return (
+    <nav className="tab-bar">
+      {tabs.map((t) => (
+        <button
+          key={t.id}
+          className={t.id === active ? "active" : ""}
+          onClick={() => onChange(t.id)}
+        >
+          {t.label}
+        </button>
+      ))}
+    </nav>
+  );
+}

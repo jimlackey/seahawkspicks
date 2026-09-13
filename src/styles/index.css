@@ -1,0 +1,401 @@
+:root {
+  --navy: #0b1f33;
+  --navy-light: #16324f;
+  --green: #5fa829;
+  --grey: #a5acaf;
+  --grey-light: #dfe2e0;
+  --paper: #f4f5f1;
+  --ink: #14181b;
+  --gold: #d8a73d;
+
+  --display: "Big Shoulders Display", sans-serif;
+  --body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+button {
+  font-family: inherit;
+}
+
+.app-shell {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 20px 64px;
+}
+
+/* ---------- Header ---------- */
+
+.app-header {
+  padding: 28px 0 18px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--grey-light);
+}
+
+.app-header h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: 0.2px;
+  margin: 0;
+  color: var(--navy);
+}
+
+.app-header .season-tag {
+  font-size: 14px;
+  color: var(--grey);
+  font-weight: 500;
+}
+
+/* ---------- Tabs ---------- */
+
+.tab-bar {
+  display: flex;
+  gap: 28px;
+  border-bottom: 1px solid var(--grey-light);
+  margin-bottom: 28px;
+}
+
+.tab-bar button {
+  background: none;
+  border: none;
+  padding: 14px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--grey);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab-bar button.active {
+  color: var(--navy);
+  border-bottom-color: var(--green);
+}
+
+/* ---------- Matchup ticket ---------- */
+
+.ticket {
+  background: var(--navy);
+  color: var(--paper);
+  border-radius: 4px;
+  padding: 24px 24px 20px;
+  margin-bottom: 32px;
+}
+
+.ticket .week-line {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0.3px;
+  margin: 0 0 2px;
+}
+
+.ticket .matchup-line {
+  font-size: 14px;
+  color: var(--grey-light);
+  margin: 0 0 16px;
+}
+
+.ticket .lines-row {
+  display: flex;
+  gap: 24px;
+  font-size: 13px;
+  color: var(--grey-light);
+  border-top: 1px solid rgba(244, 245, 241, 0.15);
+  padding-top: 12px;
+}
+
+.ticket .lines-row strong {
+  color: var(--paper);
+  font-weight: 600;
+}
+
+/* ---------- Pick form ---------- */
+
+.picks-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 520px) {
+  .picks-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.player-card {
+  border: 1px solid var(--grey-light);
+  border-radius: 4px;
+  padding: 16px;
+}
+
+.player-card h3 {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  color: var(--navy);
+}
+
+.score-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.score-inputs input {
+  width: 100%;
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  border: 1px solid var(--grey-light);
+  border-radius: 4px;
+  padding: 8px 4px;
+  color: var(--navy);
+}
+
+.score-inputs input:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
+}
+
+.score-inputs .dash {
+  color: var(--grey);
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.ou-toggle {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.ou-toggle button {
+  flex: 1;
+  padding: 6px 0;
+  border: 1px solid var(--grey-light);
+  background: var(--paper);
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--grey);
+  cursor: pointer;
+}
+
+.ou-toggle button.selected {
+  border-color: var(--navy);
+  color: var(--navy);
+  background: #eef1ee;
+}
+
+.save-btn {
+  width: 100%;
+  padding: 9px 0;
+  background: var(--navy);
+  color: var(--paper);
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.save-btn:disabled {
+  background: var(--grey-light);
+  color: var(--grey);
+  cursor: default;
+}
+
+.save-status {
+  font-size: 13px;
+  color: var(--green);
+  margin-top: 8px;
+  min-height: 18px;
+}
+
+.locked-note {
+  font-size: 13px;
+  color: var(--grey);
+  margin-top: -4px;
+  margin-bottom: 20px;
+}
+
+/* ---------- Results ---------- */
+
+.week-result {
+  border-bottom: 1px solid var(--grey-light);
+  padding: 16px 0;
+}
+
+.week-result:last-child {
+  border-bottom: none;
+}
+
+.week-result-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.week-result-head .week-label {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--navy);
+}
+
+.week-result-head .final-score {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.pick-rows {
+  display: grid;
+  gap: 6px;
+}
+
+.pick-row {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.pick-row .player-name {
+  font-weight: 600;
+}
+
+.pick-row .picked-score {
+  color: var(--grey);
+  font-variant-numeric: tabular-nums;
+}
+
+.pick-row .diff-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--grey);
+}
+
+.pick-row.winner .player-name {
+  color: var(--gold);
+}
+
+.pick-row.winner .diff-badge {
+  color: var(--gold);
+}
+
+.pick-row.missed .picked-score {
+  font-style: italic;
+}
+
+/* ---------- Standings ---------- */
+
+.standings-list {
+  display: grid;
+  gap: 2px;
+}
+
+.standings-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: baseline;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--grey-light);
+}
+
+.standings-row .place {
+  font-family: var(--display);
+  font-size: 16px;
+  color: var(--grey);
+}
+
+.standings-row .name {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.standings-row .record {
+  font-size: 13px;
+  color: var(--grey);
+  font-weight: 400;
+  margin-left: 8px;
+}
+
+.standings-row .points {
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+/* ---------- Utility ---------- */
+
+.empty-state {
+  padding: 40px 0;
+  text-align: center;
+  color: var(--grey);
+  font-size: 14px;
+}
+
+.sync-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.sync-row button {
+  font-size: 13px;
+  color: var(--navy);
+  background: none;
+  border: 1px solid var(--grey-light);
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.sync-row button:disabled {
+  color: var(--grey);
+  cursor: default;
+}
+
+.error-banner {
+  background: #fbeceb;
+  border: 1px solid #e6b3ae;
+  color: #8a2f26;
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
