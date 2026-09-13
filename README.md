@@ -82,6 +82,11 @@ of pill buttons, and a gold highlight reserved for whoever won the week.
 
 ### Setup to run locally
 
+**Superseded by Step 5 below** — Step 5 changed the schema, locked down
+RLS, and replaced the anon key with the secret key entirely. Use Step
+5's setup instructions instead; this section is kept only as a record of
+what Step 4 originally shipped.
+
 1. `npm install`
 2. Create a free [Supabase](https://supabase.com) project, then run
    `supabase/schema.sql` in its SQL editor.
@@ -89,7 +94,7 @@ of pill buttons, and a gold highlight reserved for whoever won the week.
    key and your Odds API key.
 4. `npm run dev`
 
-### Security note
+### Security note (superseded by Step 5)
 
 The Supabase `anon` key is meant to be public (that's how Supabase's model
 works) — the RLS policies in `schema.sql` are the real access boundary,
@@ -137,9 +142,11 @@ HTTP endpoints instead of Server Actions, called from React via `fetch`.
   which now belong to a `pool_id` and are keyed by `participant_id`
   instead of a hardcoded `"Mark"`/`"Brian"`/`"Jim"` string.
 - **RLS is now locked to default-deny.** Every read and write goes
-  through an `/api/*` endpoint using the service-role key
-  (`api/_lib/supabaseAdmin.js`). The anon key isn't used anywhere anymore
-  — there's no direct Supabase access from the browser at all.
+  through an `/api/*` endpoint using the secret key
+  (`api/_lib/supabaseAdmin.js`) — Supabase's current name for what used
+  to be called the service_role key; same bypass-RLS behavior, new name.
+  The publishable/anon key isn't used anywhere in this app — there's no
+  direct Supabase access from the browser at all.
 - **Login flow**: enter email → `/api/auth/request-code` checks the
   whitelist, rate-limits, generates a 6-digit code, bcrypt-hashes it into
   `otp_requests`, emails the plain code via Resend. Enter the code →
@@ -182,12 +189,15 @@ To live at `jimlackey.com/seahawks` alongside `jimlackey.com/worldcup`:
 
 ### New environment variables (see `.env.example`)
 
-`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (service-role, not anon —
-server-side only), `RESEND_API_KEY`, `RESEND_FROM_EMAIL`,
-`SESSION_SECRET` (generate with `openssl rand -hex 32`),
-`SESSION_DURATION_HOURS`, `ODDS_API_KEY` (unchanged from Step 2/3),
-`APP_URL` (used to build links in access-request emails), and
-`VITE_BASE_PATH` (only needed for the multi-zone production deploy).
+`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (despite the var name, this
+should hold Supabase's **Secret Key**, `sb_secret_...` — found under
+Settings → API Keys, not the Publishable Key; the Project URL itself is
+under Settings → Data API, a different tab), `RESEND_API_KEY`,
+`RESEND_FROM_EMAIL`, `SESSION_SECRET` (generate with
+`openssl rand -hex 32`), `SESSION_DURATION_HOURS`, `ODDS_API_KEY`
+(unchanged from Step 2/3), `APP_URL` (used to build links in
+access-request emails), and `VITE_BASE_PATH` (only needed for the
+multi-zone production deploy).
 
 ### Setup to run locally
 

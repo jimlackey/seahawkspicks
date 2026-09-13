@@ -1,6 +1,7 @@
-// Server-side only — uses the Supabase service_role key, which bypasses
-// RLS entirely. Never import this from src/ (the client bundle); it only
-// runs inside /api serverless functions.
+// Server-side only — uses the Supabase Secret Key (sb_secret_...),
+// Supabase's current name for what used to be the service_role key. It
+// still bypasses RLS entirely the same way. Never import this from src/
+// (the client bundle); it only runs inside /api serverless functions.
 
 import { createClient } from "@supabase/supabase-js";
 
