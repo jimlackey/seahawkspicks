@@ -1,5 +1,5 @@
-import { requireSession } from "../_lib/requireAuth.js";
-import { supabaseAdmin } from "../_lib/supabaseAdmin.js";
+import { requireSession } from "./_lib/requireAuth.js";
+import { supabaseAdmin } from "./_lib/supabaseAdmin.js";
 
 const SEASON = 2026;
 

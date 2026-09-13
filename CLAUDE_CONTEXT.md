@@ -101,9 +101,20 @@ Domain tables, both scoped by `pool_id`:
   ou_pick) — unique on (pool_id, season, week, participant_id)
 
 **RLS is default-deny on every table.** All reads/writes go through
-`/api/*` serverless functions using the service-role key
+`/api/*` serverless functions using the secret key
 (`api/_lib/supabaseAdmin.js`). The browser never talks to Supabase
-directly — no anon key is used anywhere in this app.
+directly — no publishable/anon key is used anywhere in this app.
+
+**Supabase key naming (gotcha, discovered post-deploy-planning)**:
+Supabase has renamed its API keys — `sb_publishable_...` replaces the old
+`anon` key, `sb_secret_...` replaces the old `service_role` key. Same
+permissions/behavior, just not JWT-formatted anymore, and any client
+library version accepts them as drop-in replacements. This project's env
+var is still named `SUPABASE_SERVICE_ROLE_KEY` for historical consistency
+with the rest of the codebase, but the value that goes in it is the
+**Secret Key** from Settings → API Keys (not the Publishable Key). The
+Project URL is on a separate tab, Settings → Data API, not the API Keys
+tab — a genuinely non-obvious spot the user got stuck on once already.
 
 This app only ever seeds one `pools` row (`slug = 'seahawks'`), even
 though the schema supports many, for consistency with World Cup's
@@ -146,6 +157,20 @@ Endpoints: `/api/auth/{request-code,verify-code,me,logout,
 request-access,grant-access}`, `/api/admin/{whitelist,roster}`,
 `/api/{games,picks,roster}`.
 
+**Bug already found and fixed once**: `api/games.js` and `api/picks.js`
+originally imported `../_lib/...` (copy-pasted from the `api/auth/*.js`
+files, which are one folder deeper). Since `games.js`/`picks.js` live
+directly in `/api/`, not a subfolder, that path resolved to a
+nonexistent directory one level above `/api/`, crashing the function at
+import time with a generic unhandled 500 (no JSON error body — that's
+the tell: a deliberate `res.status(500).json({error: "..."})` in this
+codebase always has a specific message; a bare "(500)" with nothing
+after it means an uncaught crash before our own error handling ran).
+Fixed to `./_lib/...`. If a similar generic 500 shows up again on a
+different endpoint, check import path depth against actual folder
+location first — `api/*.js` → `./_lib/`, `api/auth/*.js` and
+`api/admin/*.js` → `../_lib/`.
+
 **Not yet tested end-to-end** against real Supabase/Resend (sandbox has
 no network access to either) — JWT roundtrip and OTP generation were
 verified in isolation with dummy env vars, and the client build/tests
@@ -177,6 +202,17 @@ project's repo/rewrite config is not visible to Claude — it's a separate
 repo from `worldcup-pickem`. Need the user to either share that project's
 `next.config.ts` rewrites (to mirror the exact pattern already used for
 `/worldcup`) or confirm it a different way. Don't guess at this — ask.
+
+**Gotcha, already hit once**: once `VITE_BASE_PATH=/seahawks/` is set in
+Vercel, the bare `*.vercel.app` deployment URL will 404 on all JS/CSS
+assets and render a blank page (valid `<head>`, empty `<div>` in
+`<body>`) — this is expected, not a bug. The build's asset paths are
+baked to expect the `/seahawks` prefix, which only exists once the
+multi-zone rewrite (above) is live. To sanity-check the app standalone,
+temporarily unset `VITE_BASE_PATH`, redeploy, test the bare URL, then
+re-set it to `/seahawks/` and redeploy again before wiring/testing the
+real rewrite — and from that point on, only test via
+`www.jimlackey.com/seahawks`, not the bare Vercel URL.
 
 ---
 
