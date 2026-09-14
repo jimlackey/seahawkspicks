@@ -481,7 +481,46 @@ build a "cheaper" quota check later; this one already costs nothing.
 
 ---
 
-## 15. How to use this file
+## 15. Vercel Hobby plan's 12-function limit (already hit once)
+
+Hobby-tier Vercel projects cap out at **12 Serverless Functions per
+deployment**. This repo hit that limit for real (deploy failed) once
+`api/admin/usage.js` (§14) pushed the count to 13 separate route files.
+
+**Fix applied**: Vercel supports dynamic API routes via bracket-named
+files (`[param].js`), same convention as Next.js file routing — one
+file can serve many URL paths, with the matched segment available as
+`req.query.<param>`. Consolidated:
+- `api/auth/{request-code,verify-code,me,logout,request-access,
+  grant-access}.js` (6 files) → **`api/auth/[action].js`** (1 file),
+  dispatching on `req.query.action` via a switch statement.
+- `api/admin/{whitelist,roster,usage}.js` (3 files) → **`api/admin/[action].js`**
+  (1 file), same pattern.
+
+This is a **pure routing consolidation, zero behavior change** — every
+handler's logic (auth checks, validation, error messages) was moved
+verbatim into a named function within the merged file. The frontend's
+`fetch()` calls in `db.js` were never touched and don't need to be —
+`/api/auth/request-code` etc. still resolve to exactly those same URLs,
+Vercel's router just maps them to the dynamic file now instead of a
+dedicated one.
+
+**Current count: 6 functions** (`api/auth/[action].js`,
+`api/admin/[action].js`, `api/games.js`, `api/picks.js`, `api/roster.js`,
+`api/sync-week.js`) — comfortable headroom under 12. `api/_lib/*` files
+don't count at all (Vercel excludes underscore-prefixed
+folders/files from function routing entirely — that's *why* the shared
+lib code lives under `_lib` in the first place, not just a naming
+preference).
+
+**If more endpoints get added later**: prefer adding a new `case` to
+one of the two existing `[action].js` switches, or consolidating
+`games.js`/`picks.js`/`roster.js`/`sync-week.js` the same way, before
+reaching for a new standalone file — the ceiling is real and close.
+
+---
+
+## 16. How to use this file
 
 Point a new Claude session at this file (paste it in, upload it, or — if
 using Claude Projects — add it to the project's knowledge so it's always
