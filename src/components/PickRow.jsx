@@ -72,9 +72,10 @@ export default function PickRow({ week, game, existingPick, onSave }) {
   const homeTeamName = home === true ? "Seattle Seahawks" : home === false ? opponent : null;
   const awayTeamName = home === true ? opponent : home === false ? "Seattle Seahawks" : null;
 
+  const formatLine = (n) => (n == null ? "—" : n.toFixed(1));
   const lineText =
     game && (game.spread != null || game.total != null)
-      ? `${game.spread != null ? game.spread : "—"}/${game.total != null ? game.total : "—"}`
+      ? `${formatLine(game.spread)}/${formatLine(game.total)}`
       : "—";
 
   const predictedTotal = bothValid ? hawksNum + oppNum : null;
