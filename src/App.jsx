@@ -3,6 +3,7 @@ import TabBar from "./components/TabBar.jsx";
 import PicksGrid from "./components/PicksGrid.jsx";
 import Results from "./components/Results.jsx";
 import Standings from "./components/Standings.jsx";
+import Rules from "./components/Rules.jsx";
 import Login from "./components/Login.jsx";
 import AdminPanel from "./components/AdminPanel.jsx";
 import {
@@ -136,6 +137,7 @@ export default function App() {
           )}
           {tab === "results" && <Results games={games} picksByWeek={picksMap} roster={roster} />}
           {tab === "standings" && <Standings weeks={scoringWeeks} roster={roster} />}
+          {tab === "rules" && <Rules />}
           {tab === "admin" && isAdmin && <AdminPanel onGamesChanged={loadData} />}
         </>
       )}

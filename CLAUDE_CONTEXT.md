@@ -417,7 +417,32 @@ skip it.
 
 ---
 
-## 13. How to use this file
+## 13. Rules page (static, read-only)
+
+`src/components/Rules.jsx` — a 5th tab (Picks/Results/Standings/Rules,
+plus Admin for admins). Plain static JSX, no data fetching. Explains
+Diff, the correct-winner-first ranking rule, missed-pick penalty,
+season standings points, and the informational-only O/U — each with a
+worked numeric example.
+
+**The worked examples are verified against the real engine, not just
+hand-computed** — same Jim/Mark/Brian names and diff values (6/7/16)
+used in §2's week-13 discussion, run through the actual `scoreWeek`/
+`rankWeek` functions to confirm the displayed ranks (Mark 1st, Jim 2nd,
+Brian 3rd) and the missed-pick example (diff 8) are exactly what the
+engine produces. If this page is ever edited, re-verify any changed
+numbers the same way rather than hand-computing — it's easy to get diff
+math subtly wrong, and this page is presented as the authoritative
+rules explanation.
+
+**Tab bar CSS was tightened** (gap 28px→16px, font 15px→13.5px, added
+`overflow-x:auto` as a safety net) when this 5th tab was added, since
+5 tabs at the original sizing risked its own horizontal scroll on
+mobile — the same class of problem as §9's picks-table scroll issue.
+
+---
+
+## 14. How to use this file
 
 Point a new Claude session at this file (paste it in, upload it, or — if
 using Claude Projects — add it to the project's knowledge so it's always

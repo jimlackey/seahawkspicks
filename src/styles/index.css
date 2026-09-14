@@ -74,21 +74,24 @@ button {
 
 .tab-bar {
   display: flex;
-  gap: 28px;
+  gap: 16px;
   border-bottom: 1px solid var(--grey-light);
   margin-bottom: 28px;
+  overflow-x: auto;
+  white-space: nowrap;
 }
 
 .tab-bar button {
   background: none;
   border: none;
   padding: 14px 0;
-  font-size: 15px;
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--grey);
   cursor: pointer;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
+  flex-shrink: 0;
 }
 
 .tab-bar button.active {
@@ -531,6 +534,94 @@ button {
 }
 
 /* ---------- Utility ---------- */
+
+.rules-page {
+  padding-bottom: 20px;
+}
+
+.rules-section {
+  margin-bottom: 28px;
+}
+
+.rules-section h2 {
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 8px;
+}
+
+.rules-section p {
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0 0 10px;
+}
+
+.rules-example {
+  background: #f4f5f1;
+  border: 1px solid var(--grey-light);
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-top: 10px;
+}
+
+.rules-example p {
+  font-size: 13px;
+  margin: 0 0 6px;
+}
+
+.rules-example-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--grey);
+  font-weight: 600;
+  margin-bottom: 8px !important;
+}
+
+.rules-example-math {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.rules-example-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 4px 0 10px;
+  font-size: 12.5px;
+}
+
+.rules-example-table th {
+  text-align: left;
+  color: var(--grey);
+  font-weight: 600;
+  font-size: 11px;
+  padding: 0 6px 6px 0;
+  border-bottom: 1px solid var(--grey-light);
+}
+
+.rules-example-table td {
+  padding: 5px 6px 5px 0;
+  border-bottom: 1px solid var(--grey-light);
+}
+
+.rules-points-table {
+  border-collapse: collapse;
+  margin-bottom: 10px;
+}
+
+.rules-points-table td {
+  padding: 4px 16px 4px 0;
+  font-size: 14px;
+}
+
+.rules-points-table td:last-child {
+  font-family: var(--display);
+  font-weight: 700;
+  color: var(--navy);
+}
 
 .empty-state {
   padding: 40px 0;

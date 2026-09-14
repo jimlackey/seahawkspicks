@@ -2,6 +2,7 @@ const BASE_TABS = [
   { id: "picks", label: "Picks" },
   { id: "results", label: "Results" },
   { id: "standings", label: "Standings" },
+  { id: "rules", label: "Rules" },
 ];
 
 export default function TabBar({ active, onChange, isAdmin }) {
