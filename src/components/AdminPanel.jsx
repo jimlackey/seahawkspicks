@@ -5,6 +5,7 @@ import {
   removeFromWhitelist,
   getAdminRoster,
   setParticipantRole,
+  updateParticipantProfile,
   syncOddsAndScores,
 } from "../lib/db.js";
 
@@ -62,6 +63,11 @@ export default function AdminPanel({ onGamesChanged }) {
     } catch (err) {
       setError(err.message);
     }
+  }
+
+  async function handleProfileSave(participantId, { displayName, email }) {
+    await updateParticipantProfile(participantId, { displayName, email });
+    await load();
   }
 
   async function handleSync(e) {
@@ -172,37 +178,159 @@ export default function AdminPanel({ onGamesChanged }) {
       </h3>
       <div>
         {roster.map((p) => (
-          <div
+          <RosterRow
             key={p.participantId}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "8px 0",
-              borderBottom: "1px solid var(--grey-light)",
-              fontSize: 14,
-            }}
-          >
-            <span>
-              {p.displayName ?? p.email} <span style={{ color: "var(--grey)" }}>({p.role})</span>
-            </span>
-            <button
-              onClick={() => handleRoleToggle(p.participantId, p.role)}
-              style={{
-                background: "none",
-                border: "1px solid var(--grey-light)",
-                borderRadius: 4,
-                padding: "4px 10px",
-                fontSize: 13,
-                cursor: "pointer",
-              }}
-            >
-              {p.role === "admin" ? "Demote to player" : "Promote to admin"}
-            </button>
-          </div>
+            player={p}
+            onRoleToggle={() => handleRoleToggle(p.participantId, p.role)}
+            onProfileSave={(fields) => handleProfileSave(p.participantId, fields)}
+          />
         ))}
         {roster.length === 0 && <div className="empty-state">No one has logged in yet.</div>}
       </div>
+    </div>
+  );
+}
+
+function RosterRow({ player, onRoleToggle, onProfileSave }) {
+  const [editing, setEditing] = useState(false);
+  const [displayName, setDisplayName] = useState(player.displayName ?? "");
+  const [email, setEmail] = useState(player.email);
+  const [saving, setSaving] = useState(false);
+  const [rowError, setRowError] = useState(null);
+
+  function startEdit() {
+    setDisplayName(player.displayName ?? "");
+    setEmail(player.email);
+    setRowError(null);
+    setEditing(true);
+  }
+
+  async function handleSave(e) {
+    e.preventDefault();
+    setSaving(true);
+    setRowError(null);
+    try {
+      await onProfileSave({ displayName, email });
+      setEditing(false);
+    } catch (err) {
+      setRowError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (editing) {
+    return (
+      <form
+        onSubmit={handleSave}
+        style={{
+          padding: "8px 0",
+          borderBottom: "1px solid var(--grey-light)",
+        }}
+      >
+        {rowError && <div className="error-banner" style={{ marginBottom: 8 }}>{rowError}</div>}
+        <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+          <input
+            type="text"
+            placeholder="Display name"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            style={{
+              flex: 1,
+              padding: "6px 8px",
+              border: "1px solid var(--grey-light)",
+              borderRadius: 4,
+              fontSize: 13,
+            }}
+          />
+          <input
+            type="email"
+            required
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            style={{
+              flex: 1,
+              padding: "6px 8px",
+              border: "1px solid var(--grey-light)",
+              borderRadius: 4,
+              fontSize: 13,
+            }}
+          />
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          <button
+            type="submit"
+            disabled={saving}
+            className="save-btn"
+            style={{ width: "auto", padding: "4px 12px", fontSize: 13 }}
+          >
+            {saving ? "Saving…" : "Save"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setEditing(false)}
+            style={{
+              background: "none",
+              border: "1px solid var(--grey-light)",
+              borderRadius: 4,
+              padding: "4px 12px",
+              fontSize: 13,
+              cursor: "pointer",
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "8px 0",
+        borderBottom: "1px solid var(--grey-light)",
+        fontSize: 14,
+      }}
+    >
+      <span>
+        {player.displayName ?? player.email}{" "}
+        <span style={{ color: "var(--grey)" }}>
+          ({player.email}, {player.role})
+        </span>
+      </span>
+      <span style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+        <button
+          onClick={startEdit}
+          style={{
+            background: "none",
+            border: "1px solid var(--grey-light)",
+            borderRadius: 4,
+            padding: "4px 10px",
+            fontSize: 13,
+            cursor: "pointer",
+          }}
+        >
+          Edit
+        </button>
+        <button
+          onClick={onRoleToggle}
+          style={{
+            background: "none",
+            border: "1px solid var(--grey-light)",
+            borderRadius: 4,
+            padding: "4px 10px",
+            fontSize: 13,
+            cursor: "pointer",
+          }}
+        >
+          {player.role === "admin" ? "Demote to player" : "Promote to admin"}
+        </button>
+      </span>
     </div>
   );
 }

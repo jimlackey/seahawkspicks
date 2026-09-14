@@ -397,7 +397,27 @@ points descending.
 
 ---
 
-## 12. How to use this file
+## 12. Admin panel: editing player name/email
+
+`AdminPanel.jsx`'s roster rows now have an "Edit" button (inline form,
+not a modal) for `displayName`/`email`, alongside the existing
+promote/demote role button. Backed by `PATCH /api/admin/roster`
+(`api/admin/roster.js`), extended to accept optional `displayName`/
+`email` fields alongside the pre-existing `role` field —
+`updateParticipantProfile()` in `db.js` calls it.
+
+**Important correctness detail, already handled**: changing a
+participant's email also moves their `pool_whitelist` entry (delete old
+email's row, upsert the new one) in the same request. Without this,
+editing someone's email would lock them out entirely — the whitelist
+check in `/api/auth/request-code` matches by email, so the new address
+wouldn't be whitelisted and the old one would be orphaned. If this
+endpoint gets touched again, keep that swap — don't let email updates
+skip it.
+
+---
+
+## 13. How to use this file
 
 Point a new Claude session at this file (paste it in, upload it, or — if
 using Claude Projects — add it to the project's knowledge so it's always

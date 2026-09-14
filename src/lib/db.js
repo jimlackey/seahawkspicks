@@ -149,3 +149,10 @@ export function setParticipantRole(participantId, role) {
     body: JSON.stringify({ participantId, role }),
   });
 }
+
+export function updateParticipantProfile(participantId, { displayName, email }) {
+  return apiFetch("/api/admin/roster", {
+    method: "PATCH",
+    body: JSON.stringify({ participantId, displayName, email }),
+  });
+}
