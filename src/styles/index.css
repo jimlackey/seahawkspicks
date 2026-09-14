@@ -608,6 +608,10 @@ button {
   color: #c0392b;
 }
 
+.ag-na {
+  color: var(--grey-light);
+}
+
 /* ---------- Utility ---------- */
 
 .rules-page {

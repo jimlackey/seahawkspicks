@@ -596,6 +596,19 @@ sync button.
 - **Both buttons stay live for past weeks on purpose** (explicit user
   request) — Update Score can correct a wrong final score after the
   fact.
+- **Update Odds is now restricted to the one relevant week** (follow-up
+  fix): the Odds API's `/odds` endpoint only ever returns the Seahawks'
+  *current* upcoming game — no historical closing lines for games
+  already played, and no per-week lookup at all. Clicking Update Odds
+  on any other week reliably hit the opponent-mismatch safety check
+  (correctly refusing to write) — confirmed in practice when the user
+  tried it on a past week and got exactly that rejection. Fixed in
+  `AdminGamesTable.jsx`: computes `relevantOddsWeek` as the earliest
+  week with a game row that isn't `completed` yet, and `AdminGameRow`
+  only renders the Update Odds button for that one week (shows `—`
+  everywhere else). Update Score has no equivalent restriction — it
+  works for any recently-completed game within the 3-day window (§3),
+  which is why it stays available on every past week.
 - **No separate "recalculate" step exists or is needed.** Results and
   Standings are pure functions computed live from whatever's currently
   in `games`+`picks` (`scoreWeek`/`rankWeek`/`computeSeasonStandings`,

@@ -3,7 +3,7 @@ import TeamBadge from "./TeamBadge.jsx";
 import { formatLine } from "../lib/format.js";
 import { syncOdds, syncScore } from "../lib/db.js";
 
-export default function AdminGameRow({ week, game, onSynced }) {
+export default function AdminGameRow({ week, game, showOddsButton, onSynced }) {
   const [oddsBusy, setOddsBusy] = useState(false);
   const [scoreBusy, setScoreBusy] = useState(false);
   const [oddsStatus, setOddsStatus] = useState(null); // {ok, msg}
@@ -67,11 +67,17 @@ export default function AdminGameRow({ week, game, onSynced }) {
       <td className="ag-line">{lineText}</td>
       <td className="ag-final">{finalText}</td>
       <td className="ag-action">
-        <button className="ag-btn" onClick={handleUpdateOdds} disabled={oddsBusy}>
-          {oddsBusy ? "…" : "Update Odds"}
-        </button>
-        {oddsStatus && (
-          <div className={`ag-status ${oddsStatus.ok ? "ag-status-ok" : "ag-status-err"}`}>{oddsStatus.msg}</div>
+        {showOddsButton ? (
+          <>
+            <button className="ag-btn" onClick={handleUpdateOdds} disabled={oddsBusy}>
+              {oddsBusy ? "…" : "Update Odds"}
+            </button>
+            {oddsStatus && (
+              <div className={`ag-status ${oddsStatus.ok ? "ag-status-ok" : "ag-status-err"}`}>{oddsStatus.msg}</div>
+            )}
+          </>
+        ) : (
+          <span className="ag-na">—</span>
         )}
       </td>
       <td className="ag-action">
