@@ -281,6 +281,14 @@ real rewrite — and from that point on, only test via
 - Main picks page is a **full-season grid** (one row per week 1-18), not
   a single-week view — explicitly requested to replace the stepper.
   Sync odds/scores lives in Admin only now, not on the picks page.
+- **Team logos**: real NFL logo images are off-limits for Claude to
+  source (licensed sports content, blocked for image search/fetch
+  regardless of the user's fair-use intent for a personal project).
+  Team identification uses small colored badges (`teamInfo()` in
+  `src/lib/teams.js` — real brand colors, which are facts, not
+  copyrighted artwork) instead. If the user wants actual logo images,
+  they need to supply the image files themselves; Claude can wire them
+  in but shouldn't try to fetch them again.
 
 ## 9. Main picks UI (full-season grid, not a stepper)
 
@@ -315,6 +323,17 @@ computed predicted total + inferred O/U (display only, via
   layout) — ask before redesigning again from scratch, since "let's see
   how it works out" was the explicit framing, not a firm commitment to
   the single-line approach.
+
+**Tightening pass (still narrow on first try)**: user reported a small
+horizontal scroll on mobile even with the original sizing. Response:
+replaced team full-name text (up to 90px ellipsis width each, ×2
+columns) with small color-coded badges (~20-26px, no text on mobile),
+shrank all padding/font-sizes further, narrowed the score inputs to
+24px, hid number-input spinner arrows (were eating into that width),
+and shortened the line format from "-3.5, 44.5" to "-3.5/44.5" and the
+kickoff time by dropping the comma. Not verified on an actual device —
+if it's still scrolling, the next lever is the two-line-per-week
+fallback design, not further micro-tightening of this one.
 - **Sync odds/scores moved to Admin-only** (`AdminPanel.jsx`, a week-number
   input + button calling `syncOddsAndScores(week)` from `db.js`, which
   wraps the `/api/sync-week` fetch + `/api/games` PUT that used to live

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { inferOverUnder } from "../lib/scoring.js";
-import { teamCode } from "../lib/teams.js";
+import { teamInfo } from "../lib/teams.js";
 
 const SAVE_DEBOUNCE_MS = 600;
 
@@ -17,9 +17,9 @@ function formatKickoff(iso) {
     hour12: true,
   }).formatToParts(d);
   const get = (type) => parts.find((p) => p.type === type)?.value ?? "";
-  // "Wed 9/9, 5:30p" — compact, single lowercase am/pm letter.
+  // "Wed 9/9 5:30p" — compact, single lowercase am/pm letter, no comma.
   const ampm = get("dayPeriod").toLowerCase().charAt(0);
-  return `${get("weekday")} ${get("month")}/${get("day")}, ${get("hour")}:${get("minute")}${ampm}`;
+  return `${get("weekday")} ${get("month")}/${get("day")} ${get("hour")}:${get("minute")}${ampm}`;
 }
 
 export default function PickRow({ week, game, existingPick, onSave }) {
@@ -74,7 +74,7 @@ export default function PickRow({ week, game, existingPick, onSave }) {
 
   const lineText =
     game && (game.spread != null || game.total != null)
-      ? `${game.spread != null ? game.spread : "—"}, ${game.total != null ? game.total : "—"}`
+      ? `${game.spread != null ? game.spread : "—"}/${game.total != null ? game.total : "—"}`
       : "—";
 
   const predictedTotal = bothValid ? hawksNum + oppNum : null;
@@ -85,10 +85,10 @@ export default function PickRow({ week, game, existingPick, onSave }) {
       <td className="col-week">{week}</td>
       <td className="col-time">{formatKickoff(game?.commence_time)}</td>
       <td className="col-team">
-        <TeamLabel fullName={homeTeamName} />
+        <TeamBadge fullName={homeTeamName} />
       </td>
       <td className="col-team">
-        <TeamLabel fullName={awayTeamName} />
+        <TeamBadge fullName={awayTeamName} />
       </td>
       <td className="col-line">{lineText}</td>
       <td className="col-pick">
@@ -129,20 +129,15 @@ export default function PickRow({ week, game, existingPick, onSave }) {
   );
 }
 
-function TeamLabel({ fullName }) {
-  if (!fullName) {
-    return (
-      <>
-        <span className="team-short">—</span>
-        <span className="team-full">—</span>
-      </>
-    );
-  }
+function TeamBadge({ fullName }) {
+  const { code, color } = teamInfo(fullName);
   return (
-    <>
-      <span className="team-short">{teamCode(fullName)}</span>
-      <span className="team-full">{fullName}</span>
-    </>
+    <span className="team-cell">
+      <span className="team-badge" style={{ background: color }}>
+        {code}
+      </span>
+      <span className="team-full">{fullName ?? "—"}</span>
+    </span>
   );
 }
 

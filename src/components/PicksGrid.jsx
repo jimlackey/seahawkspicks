@@ -15,8 +15,8 @@ export default function PicksGrid({ games, myPicks, onSavePick }) {
           <tr>
             <th className="col-week">Wk</th>
             <th className="col-time">Time</th>
-            <th className="col-team">Home</th>
-            <th className="col-team">Away</th>
+            <th className="col-team">H</th>
+            <th className="col-team">A</th>
             <th className="col-line">Line</th>
             <th className="col-pick">SEA</th>
             <th className="col-pick">Opp</th>

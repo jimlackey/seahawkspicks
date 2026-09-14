@@ -98,29 +98,29 @@ button {
 
 .picks-table-wrap {
   overflow-x: auto;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .picks-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .picks-table th {
   text-align: left;
   font-weight: 600;
   color: var(--grey);
-  font-size: 10px;
+  font-size: 9px;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 0 4px 6px;
+  letter-spacing: 0.02em;
+  padding: 0 2px 4px;
   border-bottom: 1px solid var(--grey-light);
   white-space: nowrap;
 }
 
 .picks-table td {
-  padding: 5px 4px;
+  padding: 3px 2px;
   border-bottom: 1px solid var(--grey-light);
   white-space: nowrap;
   vertical-align: middle;
@@ -138,42 +138,49 @@ button {
   font-family: var(--display);
   font-weight: 700;
   color: var(--navy);
-  width: 22px;
+  width: 14px;
   text-align: center;
 }
 
 .picks-table .col-time {
-  font-size: 11px;
+  font-size: 9.5px;
   color: var(--grey);
 }
 
 .picks-table .col-team {
   font-weight: 600;
-  max-width: 90px;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .picks-table .col-line {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--grey);
   font-variant-numeric: tabular-nums;
 }
 
 .picks-table .col-pick {
-  width: 40px;
+  width: 28px;
+  padding-left: 1px;
+  padding-right: 1px;
 }
 
 .picks-table .col-pick input {
-  width: 34px;
+  width: 24px;
   font-family: var(--display);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   text-align: center;
   border: 1px solid var(--grey-light);
   border-radius: 3px;
-  padding: 3px 2px;
+  padding: 2px 0;
   color: var(--navy);
+  /* Hide the spinner arrows so they don't eat into the tiny width */
+  -moz-appearance: textfield;
+}
+
+.picks-table .col-pick input::-webkit-outer-spin-button,
+.picks-table .col-pick input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .picks-table .col-pick input:disabled {
@@ -190,24 +197,25 @@ button {
 .picks-table .col-total {
   font-variant-numeric: tabular-nums;
   color: var(--grey);
+  font-size: 10px;
 }
 
 .ou-tag {
   display: inline-block;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   color: var(--navy);
 }
 
 .picks-table .col-status {
-  width: 10px;
+  width: 6px;
   padding: 0;
 }
 
 .status-dot {
   display: inline-block;
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
 }
 
@@ -228,35 +236,65 @@ button {
 }
 
 .picks-legend {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--grey);
-  margin: 4px 0 24px;
+  margin: 4px 0 20px;
 }
 
-/* Team name: 3-letter code on narrow screens, full name once there's room */
+/* Team badge: small colored chip with the 2-3 letter code (no real logo
+   artwork — see teams.js). Full name shown alongside once there's room. */
+.team-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.team-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 13px;
+  padding: 0 2px;
+  border-radius: 3px;
+  color: #fff;
+  font-size: 7.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+
 .team-full {
   display: none;
-}
-
-.team-short {
-  display: inline;
 }
 
 @media (min-width: 700px) {
   .picks-table {
     font-size: 14px;
   }
+  .picks-table th {
+    font-size: 11px;
+    padding: 0 6px 6px;
+  }
+  .picks-table td {
+    padding: 6px;
+  }
+  .picks-table .col-time {
+    font-size: 12px;
+  }
+  .picks-table .col-line {
+    font-size: 12px;
+  }
+  .team-badge {
+    min-width: 26px;
+    height: 18px;
+    font-size: 10px;
+  }
   .team-full {
     display: inline;
   }
-  .team-short {
-    display: none;
-  }
-  .picks-table .col-team {
-    max-width: none;
-  }
   .picks-table .col-pick input {
-    width: 44px;
+    width: 40px;
     font-size: 16px;
   }
 }
