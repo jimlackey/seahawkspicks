@@ -350,7 +350,9 @@ save-status dot.
 
 `src/components/Results.jsx` + `ResultsTile.jsx` (replaced the old
 single-column list version). One tile per week, **all 18 weeks always
-shown** (not just completed ones), newest week first.
+shown** (not just completed ones), Week 1 on top through Week 18 at the
+bottom (ascending order — changed once from a "newest first" default;
+if this comes up again, ascending is the confirmed preference).
 
 - **Explicit privacy reversal from the Picks page**: unlike
   `PicksGrid`/`PickRow` (which only show the current user's own pick),

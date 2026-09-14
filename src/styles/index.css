@@ -384,7 +384,7 @@ button {
 .player-tile {
   border: 1px solid var(--grey-light);
   border-radius: 5px;
-  padding: 8px;
+  padding: 6px 6px;
   text-align: center;
   background: var(--paper);
 }
@@ -392,26 +392,45 @@ button {
 .player-tile-name {
   font-weight: 600;
   font-size: 12px;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+}
+
+.player-tile-score-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 5px;
+  flex-wrap: nowrap;
 }
 
 .player-tile-score {
   font-family: var(--display);
   font-weight: 700;
-  font-size: 18px;
+  font-size: 17px;
   color: var(--navy);
+  white-space: nowrap;
 }
 
 .player-tile-total {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--grey);
-  margin-top: 2px;
+  white-space: nowrap;
 }
 
 .player-tile-diff {
   font-size: 10.5px;
   color: var(--grey);
-  margin-top: 4px;
+  margin-top: 2px;
+}
+
+.check-yes {
+  color: var(--green);
+  font-weight: 700;
+}
+
+.check-no {
+  color: #c0392b;
+  font-weight: 700;
 }
 
 .player-tile.medal-gold {

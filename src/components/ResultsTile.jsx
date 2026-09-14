@@ -61,17 +61,20 @@ export default function ResultsTile({ week, game, weekPicks, roster }) {
           return (
             <div className={`player-tile ${medalClass}`} key={id}>
               <div className="player-tile-name">{player.displayName}</div>
-              <div className="player-tile-score">
-                {pick ? `${pick.hawks_score}–${pick.opp_score}` : isComplete ? "Missed" : "No pick yet"}
+              <div className="player-tile-score-row">
+                <span className="player-tile-score">
+                  {pick ? `${pick.hawks_score}–${pick.opp_score}` : isComplete ? "Missed" : "No pick yet"}
+                </span>
+                {predictedTotal != null && (
+                  <span className="player-tile-total">
+                    {predictedTotal} <span className="ou-tag">{predictedOu === "Push" ? "P" : predictedOu?.charAt(0) ?? ""}</span>
+                  </span>
+                )}
               </div>
-              {predictedTotal != null && (
-                <div className="player-tile-total">
-                  {predictedTotal} <span className="ou-tag">{predictedOu === "Push" ? "P" : predictedOu?.charAt(0) ?? ""}</span>
-                </div>
-              )}
               {isComplete && s && (
                 <div className="player-tile-diff">
-                  {s.correctWinner ? "✓ winner" : "✗ winner"} · Diff {s.diff}
+                  <span className={s.correctWinner ? "check-yes" : "check-no"}>{s.correctWinner ? "✓" : "✗"}</span> Diff{" "}
+                  {s.diff}
                 </div>
               )}
             </div>

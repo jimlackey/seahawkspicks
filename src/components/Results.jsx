@@ -10,7 +10,7 @@ export default function Results({ games, picksByWeek, roster }) {
   const gamesByWeek = {};
   for (const g of games) gamesByWeek[g.week] = g;
 
-  const weeks = Array.from({ length: TOTAL_WEEKS }, (_, i) => i + 1).reverse();
+  const weeks = Array.from({ length: TOTAL_WEEKS }, (_, i) => i + 1);
 
   return (
     <div>
