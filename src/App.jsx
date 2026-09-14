@@ -119,7 +119,7 @@ export default function App() {
           onClick={handleLogout}
           style={{ background: "none", border: "none", color: "var(--grey)", fontSize: 13, cursor: "pointer" }}
         >
-          Sign out ({me.displayName ?? me.email})
+          Log Out
         </button>
       </header>
 
