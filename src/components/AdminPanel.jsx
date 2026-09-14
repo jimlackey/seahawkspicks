@@ -6,17 +6,14 @@ import {
   getAdminRoster,
   setParticipantRole,
   updateParticipantProfile,
-  syncOddsAndScores,
   getOddsApiUsage,
 } from "../lib/db.js";
+import AdminGamesTable from "./AdminGamesTable.jsx";
 
 export default function AdminPanel({ onGamesChanged }) {
   const [whitelist, setWhitelist] = useState([]);
   const [roster, setRoster] = useState([]);
   const [newEmail, setNewEmail] = useState("");
-  const [syncWeek, setSyncWeek] = useState("");
-  const [syncing, setSyncing] = useState(false);
-  const [syncMessage, setSyncMessage] = useState(null);
   const [usage, setUsage] = useState(null);
   const [usageError, setUsageError] = useState(null);
   const [error, setError] = useState(null);
@@ -83,30 +80,9 @@ export default function AdminPanel({ onGamesChanged }) {
     await load();
   }
 
-  async function handleSync(e) {
-    e.preventDefault();
-    const weekNum = Number(syncWeek);
-    if (!Number.isInteger(weekNum) || weekNum < 1 || weekNum > 18) {
-      setError("Enter a week number between 1 and 18.");
-      return;
-    }
-    setSyncing(true);
-    setError(null);
-    setSyncMessage(null);
-    try {
-      const data = await syncOddsAndScores(weekNum);
-      setSyncMessage(
-        `Week ${weekNum}: ${data.opponent ?? "—"} — ${
-          data.completed ? `final ${data.hawksScore}-${data.oppScore}` : "not yet played"
-        }`
-      );
-      onGamesChanged?.();
-      await loadUsage();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSyncing(false);
-    }
+  function handleGamesChanged() {
+    onGamesChanged?.();
+    loadUsage();
   }
 
   if (loading) return <div className="empty-state">Loading…</div>;
@@ -118,7 +94,7 @@ export default function AdminPanel({ onGamesChanged }) {
       <h3 style={{ fontFamily: "var(--display)", color: "var(--navy)", fontSize: 18, marginBottom: 10 }}>
         Odds API usage
       </h3>
-      <div style={{ marginBottom: 32, fontSize: 14 }}>
+      <div style={{ marginBottom: 24, fontSize: 14 }}>
         {usageError ? (
           <span style={{ color: "#8a2f26" }}>{usageError}</span>
         ) : usage ? (
@@ -142,30 +118,16 @@ export default function AdminPanel({ onGamesChanged }) {
       </div>
 
       <h3 style={{ fontFamily: "var(--display)", color: "var(--navy)", fontSize: 18, marginBottom: 10 }}>
-        Sync odds/scores
+        Games — odds & scores
       </h3>
-      <form onSubmit={handleSync} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-        <input
-          type="number"
-          min="1"
-          max="18"
-          placeholder="Week #"
-          value={syncWeek}
-          onChange={(e) => setSyncWeek(e.target.value)}
-          style={{
-            width: 90,
-            padding: "8px 10px",
-            border: "1px solid var(--grey-light)",
-            borderRadius: 4,
-            fontSize: 14,
-          }}
-        />
-        <button className="save-btn" style={{ width: "auto", padding: "0 16px" }} type="submit" disabled={syncing}>
-          {syncing ? "Syncing…" : "Sync"}
-        </button>
-      </form>
-      {syncMessage && <p style={{ fontSize: 13, color: "var(--grey)", marginBottom: 32 }}>{syncMessage}</p>}
-      {!syncMessage && <div style={{ marginBottom: 32 }} />}
+      <p style={{ fontSize: 12, color: "var(--grey)", marginTop: -4, marginBottom: 10 }}>
+        Update Odds costs 2 credits · Update Score costs 2 credits. Both buttons stay available for
+        past weeks in case a score needs correcting — Results/Standings recompute automatically from
+        whatever's in the games table, so a correction there updates everything else on its own.
+      </p>
+      <div style={{ marginBottom: 32 }}>
+        <AdminGamesTable onGamesChanged={handleGamesChanged} />
+      </div>
 
       <h3 style={{ fontFamily: "var(--display)", color: "var(--navy)", fontSize: 18, marginBottom: 10 }}>
         Invite list

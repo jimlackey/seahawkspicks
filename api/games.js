@@ -25,23 +25,30 @@ export default async function handler(req, res) {
 
   if (req.method === "PUT") {
     const body = req.body ?? {};
-    const { error } = await supabaseAdmin.from("games").upsert(
-      {
-        pool_id: pool.id,
-        season: SEASON,
-        week: body.week,
-        opponent: body.opponent,
-        home: body.home,
-        commence_time: body.commenceTime,
-        spread: body.spread,
-        total: body.total,
-        hawks_score: body.hawksScore,
-        opp_score: body.oppScore,
-        completed: body.completed,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "pool_id,season,week" }
-    );
+    if (body.week == null) {
+      res.status(400).json({ error: "week is required." });
+      return;
+    }
+
+    // Built explicitly so a partial update (e.g. only spread/total from
+    // "Update Odds", or only hawks_score/opp_score/completed from
+    // "Update Score") only ever touches the columns actually provided —
+    // never overwrites an unrelated field with null just because this
+    // particular caller didn't send it.
+    const fields = { pool_id: pool.id, season: SEASON, week: body.week };
+    if (body.opponent !== undefined) fields.opponent = body.opponent;
+    if (body.home !== undefined) fields.home = body.home;
+    if (body.commenceTime !== undefined) fields.commence_time = body.commenceTime;
+    if (body.spread !== undefined) fields.spread = body.spread;
+    if (body.total !== undefined) fields.total = body.total;
+    if (body.hawksScore !== undefined) fields.hawks_score = body.hawksScore;
+    if (body.oppScore !== undefined) fields.opp_score = body.oppScore;
+    if (body.completed !== undefined) fields.completed = body.completed;
+    fields.updated_at = new Date().toISOString();
+
+    const { error } = await supabaseAdmin
+      .from("games")
+      .upsert(fields, { onConflict: "pool_id,season,week" });
     if (error) {
       res.status(500).json({ error: error.message });
       return;

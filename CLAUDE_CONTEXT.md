@@ -513,6 +513,19 @@ folders/files from function routing entirely — that's *why* the shared
 lib code lives under `_lib` in the first place, not just a naming
 preference).
 
+**Already caused a real deploy failure once, on the very next
+deploy.** The user's workflow is extracting delivered zips over their
+existing repo — which only adds/overwrites files, it never deletes
+anything not present in the zip. When the 9 old individual route files
+were replaced by the 2 `[action].js` files, the zip didn't (couldn't)
+remove the old ones, so the repo ended up with **15** functions
+(9 stale + 6 current), not 6 — same "12 function limit" error,
+worse than before the fix. Fixed with an explicit `git rm` of the 9
+stale paths. **General lesson, not just this one incident**: any time
+a future session deletes/replaces a file as part of a fix, explicitly
+call out which old file(s) need manual removal from the repo — don't
+assume the zip handles it, because it structurally can't.
+
 **If more endpoints get added later**: prefer adding a new `case` to
 one of the two existing `[action].js` switches, or consolidating
 `games.js`/`picks.js`/`roster.js`/`sync-week.js` the same way, before
@@ -520,7 +533,46 @@ reaching for a new standalone file — the ceiling is real and close.
 
 ---
 
-## 16. How to use this file
+## 16. Admin games table (replaced the week-number textbox)
+
+`AdminGamesTable.jsx` + `AdminGameRow.jsx` — the Admin tab's sync UI is
+now a table, one row per week (1-18), each with its own **Update Odds**
+and **Update Score** buttons, instead of a single textbox + one combined
+sync button.
+
+- **Split by credit cost, not just UI**: `api/sync-week.js` now takes
+  `?type=odds` or `?type=score` and only calls the one Odds API endpoint
+  needed (2 credits each) instead of always fetching both (4 credits)
+  regardless of which button was clicked. `syncOdds()`/`syncScore()` in
+  `db.js` replaced the old single `syncOddsAndScores()`.
+- **Partial writes, explicitly built** (`api/games.js`'s PUT handler):
+  Update Odds only touches `spread`/`total`; Update Score only touches
+  `hawks_score`/`opp_score`/`completed`. Neither touches
+  `opponent`/`home`/`commence_time` (those come from the schedule seed,
+  §9). Built as an explicit conditional field list, not by relying on
+  `undefined` keys silently dropping through Supabase's client
+  internals — safer and doesn't depend on library behavior this
+  codebase can't easily verify from the sandbox.
+- **Wrong-week safety check, finally addressed**: since every week now
+  has a known expected opponent (from the seeded schedule, §9), both
+  `syncOdds`/`syncScore` compare the API's returned opponent against
+  what's already stored for that week and **refuse to write, with a
+  clear error, on a mismatch** — this was gap #1 from §14's "two real
+  correctness gaps" note. Only closes it for weeks with a schedule row
+  already (all of 1-17); week 18 still has no row to check against.
+- **Both buttons stay live for past weeks on purpose** (explicit user
+  request) — Update Score can correct a wrong final score after the
+  fact.
+- **No separate "recalculate" step exists or is needed.** Results and
+  Standings are pure functions computed live from whatever's currently
+  in `games`+`picks` (`scoreWeek`/`rankWeek`/`computeSeasonStandings`,
+  §2) — nothing is cached or pre-computed. Correcting a score via
+  Update Score and then loading Results/Standings just works, no extra
+  step. Don't build a recompute button/job; there's nothing to trigger.
+
+---
+
+## 17. How to use this file
 
 Point a new Claude session at this file (paste it in, upload it, or — if
 using Claude Projects — add it to the project's knowledge so it's always

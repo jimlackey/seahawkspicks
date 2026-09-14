@@ -533,6 +533,81 @@ button {
   color: var(--navy);
 }
 
+/* ---------- Admin games table ---------- */
+
+.ag-table-wrap {
+  overflow-x: auto;
+}
+
+.ag-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ag-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--grey);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 0 8px 6px 0;
+  border-bottom: 1px solid var(--grey-light);
+  white-space: nowrap;
+}
+
+.ag-table td {
+  padding: 8px 8px 8px 0;
+  border-bottom: 1px solid var(--grey-light);
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+.ag-week {
+  font-family: var(--display);
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.ag-line,
+.ag-final {
+  font-variant-numeric: tabular-nums;
+  color: var(--grey);
+  font-size: 12.5px;
+}
+
+.ag-btn {
+  font-size: 12px;
+  color: var(--navy);
+  background: none;
+  border: 1px solid var(--grey-light);
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ag-btn:disabled {
+  color: var(--grey);
+  cursor: default;
+}
+
+.ag-status {
+  font-size: 10.5px;
+  margin-top: 3px;
+  max-width: 140px;
+  white-space: normal;
+}
+
+.ag-status-ok {
+  color: var(--green);
+}
+
+.ag-status-err {
+  color: #c0392b;
+}
+
 /* ---------- Utility ---------- */
 
 .rules-page {

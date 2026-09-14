@@ -1,13 +1,15 @@
-// Vercel serverless function: GET /api/sync-week
+// Vercel serverless function: GET /api/sync-week?type=odds|score
 //
 // Runs server-side only, where ODDS_API_KEY is available as an env var
-// that's never sent to the browser. Combines the current Seahawks
-// spread/total with the latest result (if the game has finished) into one
-// response the client can use to update Supabase.
+// that's never sent to the browser.
 //
-// The client is responsible for the actual Supabase write (using the
-// public anon key, same as picks) — this endpoint's only job is to keep
-// the Odds API key off the client bundle.
+// Split by type so the Admin page's separate "Update Odds"/"Update
+// Score" buttons only spend credits on the endpoint they actually need
+// (2 credits each) instead of always fetching both (4 credits) regardless
+// of which button was clicked.
+//
+// The client is responsible for the actual Supabase write — this
+// endpoint's only job is to keep the Odds API key off the client bundle.
 
 import { getSeahawksClosingLines } from "../src/lib/oddsApi.js";
 import { getSeahawksResult } from "../src/lib/scoresApi.js";
@@ -23,33 +25,40 @@ export default async function handler(req, res) {
     return;
   }
 
-  try {
-    const [oddsResult, scoresResult] = await Promise.all([
-      getSeahawksClosingLines(apiKey),
-      getSeahawksResult(apiKey),
-    ]);
+  const type = req.query.type === "score" ? "score" : "odds";
 
-    if (!oddsResult.game && !scoresResult.game) {
-      res.status(200).json({ game: null, message: "No Seahawks game found (bye week?)." });
+  try {
+    if (type === "odds") {
+      const oddsResult = await getSeahawksClosingLines(apiKey);
+      if (!oddsResult.game) {
+        res.status(200).json({ game: null, message: "No Seahawks game found (bye week?)." });
+        return;
+      }
+      res.status(200).json({
+        opponent: oddsResult.lines.opponent,
+        home: oddsResult.lines.home,
+        commenceTime: oddsResult.game.commence_time,
+        spread: oddsResult.lines.spread,
+        total: oddsResult.lines.total,
+        requestsRemaining: oddsResult.requestsRemaining,
+      });
       return;
     }
 
-    // Prefer the scores-endpoint game if it's completed (it's the more
-    // recent/relevant one); otherwise use whichever game the odds endpoint
-    // found (the upcoming one).
-    const useScores = scoresResult.result?.completed;
-    const source = useScores ? scoresResult : oddsResult;
-
+    // type === "score"
+    const scoresResult = await getSeahawksResult(apiKey);
+    if (!scoresResult.game) {
+      res.status(200).json({ game: null, message: "No Seahawks game found (bye week?)." });
+      return;
+    }
     res.status(200).json({
-      opponent: source.lines?.opponent ?? scoresResult.result?.opponent ?? oddsResult.lines?.opponent,
-      home: source.lines?.home ?? scoresResult.result?.home ?? oddsResult.lines?.home,
-      commenceTime: source.game.commence_time,
-      spread: oddsResult.lines?.spread ?? null,
-      total: oddsResult.lines?.total ?? null,
-      completed: scoresResult.result?.completed ?? false,
-      hawksScore: scoresResult.result?.hawksScore ?? null,
-      oppScore: scoresResult.result?.oppScore ?? null,
-      requestsRemaining: scoresResult.requestsRemaining ?? oddsResult.requestsRemaining,
+      opponent: scoresResult.result.opponent,
+      home: scoresResult.result.home,
+      commenceTime: scoresResult.game.commence_time,
+      completed: scoresResult.result.completed,
+      hawksScore: scoresResult.result.hawksScore,
+      oppScore: scoresResult.result.oppScore,
+      requestsRemaining: scoresResult.requestsRemaining,
     });
   } catch (err) {
     res.status(502).json({ error: err.message });
