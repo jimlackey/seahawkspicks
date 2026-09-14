@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import TabBar from "./components/TabBar.jsx";
-import ThisWeek from "./components/ThisWeek.jsx";
+import PicksGrid from "./components/PicksGrid.jsx";
 import Results from "./components/Results.jsx";
 import Standings from "./components/Standings.jsx";
 import Login from "./components/Login.jsx";
@@ -12,20 +12,17 @@ import {
   getGames,
   getPicks,
   savePick,
-  syncGame,
   picksByWeek,
 } from "./lib/db.js";
 import { buildScoringWeeks } from "./lib/adapters.js";
 
 export default function App() {
   const [me, setMe] = useState(undefined); // undefined = checking, null = logged out
-  const [tab, setTab] = useState("week");
-  const [week, setWeek] = useState(1);
+  const [tab, setTab] = useState("picks");
   const [roster, setRoster] = useState([]);
   const [games, setGames] = useState([]);
   const [picks, setPicks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
   const [loadError, setLoadError] = useState(null);
 
   // Check for an existing session on load.
@@ -46,9 +43,6 @@ export default function App() {
       setRoster(rosterData);
       setGames(gamesData);
       setPicks(picksData);
-      if (gamesData.length > 0) {
-        setWeek(Math.max(...gamesData.map((g) => g.week)));
-      }
     } catch (err) {
       setLoadError(err.message);
     } finally {
@@ -61,41 +55,37 @@ export default function App() {
   }, [me, loadData]);
 
   const picksMap = useMemo(() => picksByWeek(picks), [picks]);
-  const currentGame = useMemo(() => games.find((g) => g.week === week) ?? null, [games, week]);
+  const myPicksByWeek = useMemo(() => {
+    if (!me) return {};
+    const out = {};
+    for (const [week, byParticipant] of Object.entries(picksMap)) {
+      if (byParticipant[me.id]) out[week] = byParticipant[me.id];
+    }
+    return out;
+  }, [picksMap, me]);
   const scoringWeeks = useMemo(
     () => buildScoringWeeks(games, picksMap, roster),
     [games, picksMap, roster]
   );
 
-  async function handleSync() {
-    setSyncing(true);
-    try {
-      const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-      const res = await fetch(`${basePath}/api/sync-week`, { credentials: "include" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Sync failed");
-      if (!data.game && data.message) throw new Error(data.message);
-
-      await syncGame({
+  // Updates local state immediately after a save instead of doing a full
+  // reload — a full reload on every debounced autosave (one per row, up to
+  // 18 rows) would be wasteful and risks clobbering in-progress typing in
+  // other rows.
+  async function handleSavePick(week, { hawksScore, oppScore, ouPick }) {
+    await savePick({ week, hawksScore, oppScore, ouPick });
+    setPicks((prev) => {
+      const next = prev.filter((p) => !(p.week === week && p.participant_id === me.id));
+      next.push({
         week,
-        opponent: data.opponent,
-        home: data.home,
-        commenceTime: data.commenceTime,
-        spread: data.spread,
-        total: data.total,
-        hawksScore: data.hawksScore,
-        oppScore: data.oppScore,
-        completed: data.completed,
+        participant_id: me.id,
+        hawks_score: hawksScore,
+        opp_score: oppScore,
+        ou_pick: ouPick,
+        submitted_at: new Date().toISOString(),
       });
-      await loadData();
-    } finally {
-      setSyncing(false);
-    }
-  }
-
-  async function handleSavePick(pick) {
-    await savePick(pick);
-    await loadData();
+      return next;
+    });
   }
 
   async function handleLogout() {
@@ -141,22 +131,12 @@ export default function App() {
         <div className="empty-state">Loading…</div>
       ) : (
         <>
-          {tab === "week" && (
-            <ThisWeek
-              week={week}
-              onWeekChange={setWeek}
-              game={currentGame}
-              weekPicks={picksMap[week] ?? {}}
-              roster={roster}
-              me={{ id: me.id, displayName: me.displayName ?? me.email }}
-              onSync={handleSync}
-              syncing={syncing}
-              onSavePick={handleSavePick}
-            />
+          {tab === "picks" && (
+            <PicksGrid games={games} myPicks={myPicksByWeek} onSavePick={handleSavePick} />
           )}
           {tab === "results" && <Results weeks={scoringWeeks} roster={roster} />}
           {tab === "standings" && <Standings weeks={scoringWeeks} roster={roster} />}
-          {tab === "admin" && isAdmin && <AdminPanel />}
+          {tab === "admin" && isAdmin && <AdminPanel onGamesChanged={loadData} />}
         </>
       )}
     </div>

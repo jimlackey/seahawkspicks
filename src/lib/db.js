@@ -74,6 +74,31 @@ export function syncGame(weekData) {
   return apiFetch("/api/games", { method: "PUT", body: JSON.stringify(weekData) });
 }
 
+/**
+ * Pulls the Seahawks' current odds/score from the Odds API (server-side,
+ * via /api/sync-week) and writes the result into `games` for the given
+ * week. Combines what used to be two separate calls orchestrated by the
+ * caller — now used only from the Admin panel.
+ */
+export async function syncOddsAndScores(week) {
+  const data = await apiFetch("/api/sync-week");
+  if (!data.game && data.message) {
+    throw new Error(data.message);
+  }
+  await syncGame({
+    week,
+    opponent: data.opponent,
+    home: data.home,
+    commenceTime: data.commenceTime,
+    spread: data.spread,
+    total: data.total,
+    hawksScore: data.hawksScore,
+    oppScore: data.oppScore,
+    completed: data.completed,
+  });
+  return data;
+}
+
 // ---- Picks ----
 
 export async function getPicks() {

@@ -5,12 +5,16 @@ import {
   removeFromWhitelist,
   getAdminRoster,
   setParticipantRole,
+  syncOddsAndScores,
 } from "../lib/db.js";
 
-export default function AdminPanel() {
+export default function AdminPanel({ onGamesChanged }) {
   const [whitelist, setWhitelist] = useState([]);
   const [roster, setRoster] = useState([]);
   const [newEmail, setNewEmail] = useState("");
+  const [syncWeek, setSyncWeek] = useState("");
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -60,11 +64,62 @@ export default function AdminPanel() {
     }
   }
 
+  async function handleSync(e) {
+    e.preventDefault();
+    const weekNum = Number(syncWeek);
+    if (!Number.isInteger(weekNum) || weekNum < 1 || weekNum > 18) {
+      setError("Enter a week number between 1 and 18.");
+      return;
+    }
+    setSyncing(true);
+    setError(null);
+    setSyncMessage(null);
+    try {
+      const data = await syncOddsAndScores(weekNum);
+      setSyncMessage(
+        `Week ${weekNum}: ${data.opponent ?? "—"} — ${
+          data.completed ? `final ${data.hawksScore}-${data.oppScore}` : "not yet played"
+        }`
+      );
+      onGamesChanged?.();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   if (loading) return <div className="empty-state">Loading…</div>;
 
   return (
     <div>
       {error && <div className="error-banner">{error}</div>}
+
+      <h3 style={{ fontFamily: "var(--display)", color: "var(--navy)", fontSize: 18, marginBottom: 10 }}>
+        Sync odds/scores
+      </h3>
+      <form onSubmit={handleSync} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+        <input
+          type="number"
+          min="1"
+          max="18"
+          placeholder="Week #"
+          value={syncWeek}
+          onChange={(e) => setSyncWeek(e.target.value)}
+          style={{
+            width: 90,
+            padding: "8px 10px",
+            border: "1px solid var(--grey-light)",
+            borderRadius: 4,
+            fontSize: 14,
+          }}
+        />
+        <button className="save-btn" style={{ width: "auto", padding: "0 16px" }} type="submit" disabled={syncing}>
+          {syncing ? "Syncing…" : "Sync"}
+        </button>
+      </form>
+      {syncMessage && <p style={{ fontSize: 13, color: "var(--grey)", marginBottom: 32 }}>{syncMessage}</p>}
+      {!syncMessage && <div style={{ marginBottom: 32 }} />}
 
       <h3 style={{ fontFamily: "var(--display)", color: "var(--navy)", fontSize: 18, marginBottom: 10 }}>
         Invite list

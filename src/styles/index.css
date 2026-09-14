@@ -94,108 +94,171 @@ button {
   border-bottom-color: var(--green);
 }
 
-/* ---------- Matchup ticket ---------- */
+/* ---------- Picks grid (one row per week) ---------- */
 
-.ticket {
-  background: var(--navy);
-  color: var(--paper);
-  border-radius: 4px;
-  padding: 24px 24px 20px;
-  margin-bottom: 32px;
-}
-
-.ticket .week-line {
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: 22px;
-  letter-spacing: 0.3px;
-  margin: 0 0 2px;
-}
-
-.ticket .matchup-line {
-  font-size: 14px;
-  color: var(--grey-light);
-  margin: 0 0 16px;
-}
-
-.ticket .lines-row {
-  display: flex;
-  gap: 24px;
-  font-size: 13px;
-  color: var(--grey-light);
-  border-top: 1px solid rgba(244, 245, 241, 0.15);
-  padding-top: 12px;
-}
-
-.ticket .lines-row strong {
-  color: var(--paper);
-  font-weight: 600;
-}
-
-/* ---------- Pick form ---------- */
-
-.picks-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 8px;
-}
-
-@media (max-width: 520px) {
-  .picks-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.player-card {
-  border: 1px solid var(--grey-light);
-  border-radius: 4px;
-  padding: 16px;
-}
-
-.player-card h3 {
-  font-family: var(--display);
-  font-size: 18px;
-  font-weight: 700;
-  margin: 0 0 12px;
-  color: var(--navy);
-}
-
-.score-inputs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.picks-table-wrap {
+  overflow-x: auto;
   margin-bottom: 12px;
 }
 
-.score-inputs input {
+.picks-table {
   width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.picks-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--grey);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0 4px 6px;
+  border-bottom: 1px solid var(--grey-light);
+  white-space: nowrap;
+}
+
+.picks-table td {
+  padding: 5px 4px;
+  border-bottom: 1px solid var(--grey-light);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.picks-table tr.locked {
+  background: #f9f9f7;
+}
+
+.picks-table tr.locked td {
+  color: var(--grey);
+}
+
+.picks-table .col-week {
   font-family: var(--display);
-  font-size: 22px;
+  font-weight: 700;
+  color: var(--navy);
+  width: 22px;
+  text-align: center;
+}
+
+.picks-table .col-time {
+  font-size: 11px;
+  color: var(--grey);
+}
+
+.picks-table .col-team {
+  font-weight: 600;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.picks-table .col-line {
+  font-size: 11px;
+  color: var(--grey);
+  font-variant-numeric: tabular-nums;
+}
+
+.picks-table .col-pick {
+  width: 40px;
+}
+
+.picks-table .col-pick input {
+  width: 34px;
+  font-family: var(--display);
+  font-size: 14px;
   font-weight: 700;
   text-align: center;
   border: 1px solid var(--grey-light);
-  border-radius: 4px;
-  padding: 8px 4px;
+  border-radius: 3px;
+  padding: 3px 2px;
   color: var(--navy);
 }
 
-.score-inputs input:focus-visible {
+.picks-table .col-pick input:disabled {
+  background: transparent;
+  border-color: transparent;
+  color: var(--grey);
+}
+
+.picks-table .col-pick input:focus-visible {
   outline: 2px solid var(--green);
   outline-offset: 1px;
 }
 
-.score-inputs .dash {
+.picks-table .col-total {
+  font-variant-numeric: tabular-nums;
   color: var(--grey);
-  font-family: var(--display);
-  font-size: 20px;
-  font-weight: 700;
 }
 
-.ou-inferred {
-  font-size: 13px;
+.ou-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.picks-table .col-status {
+  width: 10px;
+  padding: 0;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.dot-pending {
+  background: var(--grey);
+}
+
+.dot-saved {
+  background: var(--green);
+}
+
+.dot-error {
+  background: #c0392b;
+}
+
+.dot-locked {
+  background: transparent;
+}
+
+.picks-legend {
+  font-size: 11px;
   color: var(--grey);
-  margin-bottom: 12px;
+  margin: 4px 0 24px;
+}
+
+/* Team name: 3-letter code on narrow screens, full name once there's room */
+.team-full {
+  display: none;
+}
+
+.team-short {
+  display: inline;
+}
+
+@media (min-width: 700px) {
+  .picks-table {
+    font-size: 14px;
+  }
+  .team-full {
+    display: inline;
+  }
+  .team-short {
+    display: none;
+  }
+  .picks-table .col-team {
+    max-width: none;
+  }
+  .picks-table .col-pick input {
+    width: 44px;
+    font-size: 16px;
+  }
 }
 
 .save-btn {
@@ -214,20 +277,6 @@ button {
   background: var(--grey-light);
   color: var(--grey);
   cursor: default;
-}
-
-.save-status {
-  font-size: 13px;
-  color: var(--green);
-  margin-top: 8px;
-  min-height: 18px;
-}
-
-.locked-note {
-  font-size: 13px;
-  color: var(--grey);
-  margin-top: -4px;
-  margin-bottom: 20px;
 }
 
 /* ---------- Results ---------- */
@@ -349,27 +398,6 @@ button {
   text-align: center;
   color: var(--grey);
   font-size: 14px;
-}
-
-.sync-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 12px;
-}
-
-.sync-row button {
-  font-size: 13px;
-  color: var(--navy);
-  background: none;
-  border: 1px solid var(--grey-light);
-  border-radius: 4px;
-  padding: 6px 12px;
-  cursor: pointer;
-}
-
-.sync-row button:disabled {
-  color: var(--grey);
-  cursor: default;
 }
 
 .error-banner {

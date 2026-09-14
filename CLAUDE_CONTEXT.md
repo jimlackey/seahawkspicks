@@ -252,12 +252,18 @@ real rewrite — and from that point on, only test via
 4. ✅ React UI (Vite) — built. Originally client-only Supabase anon-key
    access; **superseded by Step 5's server-side rework** (RLS now
    default-deny, all access via `/api/*`).
-5. ✅ Auth + hosting groundwork — built per §5/§6 above. **Blocked on**:
-   root-domain rewrite config (§6) and a real deployed end-to-end test.
-6. ⬜ Not started: actual Vercel project creation/deployment, Supabase
-   project creation, Resend domain setup, the root-domain rewrite itself,
-   and a live smoke test of the whole login → pick → sync → standings
-   flow.
+5. ✅ Auth + hosting groundwork — built per §5/§6 above.
+6. 🟡 In progress: Vercel project **deployed and live** at
+   `seahawkspicks.vercel.app` (note: actual project name differs from the
+   `seahawks-scores` name originally discussed — use the real deployed
+   URL, not the planned one, when it matters). Supabase "seahawks"
+   project created, schema applied (after fixing a stale-table issue —
+   see §4's gotcha), login/games/picks confirmed working end-to-end.
+   **Still open**: the root-domain rewrite in `worldcup-pickem` (§6) to
+   actually serve this at `jimlackey.com/seahawks` hasn't been done yet.
+7. ✅ Main picks UI reworked from single-week stepper to a full-season
+   grid (see §10). Sync odds/scores moved to Admin-only, no longer on
+   the main picks page.
 
 ---
 
@@ -272,8 +278,52 @@ real rewrite — and from that point on, only test via
   verified live already — don't re-shop providers.
 - Supabase over Vercel KV/Postgres or reusing the Google Sheet as a
   backend: **decided in Step 4 scoping**, before auth was added.
+- Main picks page is a **full-season grid** (one row per week 1-18), not
+  a single-week view — explicitly requested to replace the stepper.
+  Sync odds/scores lives in Admin only now, not on the picks page.
 
-## 9. How to use this file
+## 9. Main picks UI (full-season grid, not a stepper)
+
+`src/components/PicksGrid.jsx` + `PickRow.jsx` (replaced the old
+`ThisWeek.jsx`/`PlayerPickCard.jsx`, both deleted). One `<table>` row per
+week (1-18, always all 18 rendered regardless of whether a `games` row
+exists yet for that week). Columns: week #, kickoff time (Pacific,
+compact — `formatKickoff` in `PickRow.jsx`), home team, away team, line
+(`spread, total`), your Hawks-score pick, your opponent-score pick,
+computed predicted total + inferred O/U (display only, via
+`inferOverUnder` from §2), and a small save-status dot.
+
+- **Autosave, no Save button**: each row debounces 600ms after the last
+  keystroke once both score fields are valid non-negative integers, then
+  calls `onSave(week, {...})` directly — no manual submit.
+- **Only the current user's own pick** is shown/editable here (unlike
+  the Results tab, which reveals everyone's picks after kickoff). This
+  page was never meant to show other players' numbers.
+- **Locking**: a row is locked (inputs disabled, status dot hidden) once
+  `game.commence_time` has passed. A week with no synced `games` row yet
+  is treated as unlocked/editable — consistent with "any week not yet
+  played" from the user's own framing of the requirement.
+- **Team display**: full name on wide screens, 3-letter code
+  (`src/lib/teams.js`, `teamCode()`) on narrow ones — done via two
+  sibling spans (`.team-short`/`.team-full`) toggled by a CSS media
+  query at 700px, not JS, so there's no layout-measuring logic to
+  maintain.
+- **Mobile width was the whole point** of this design — deliberately
+  tight padding/font-size in `.picks-table` CSS to fit 9 columns without
+  horizontal scroll on a phone. If that turns out not to work in
+  practice, the user already floated a fallback (a two-line-per-week
+  layout) — ask before redesigning again from scratch, since "let's see
+  how it works out" was the explicit framing, not a firm commitment to
+  the single-line approach.
+- **Sync odds/scores moved to Admin-only** (`AdminPanel.jsx`, a week-number
+  input + button calling `syncOddsAndScores(week)` from `db.js`, which
+  wraps the `/api/sync-week` fetch + `/api/games` PUT that used to live
+  in `App.jsx`/`ThisWeek.jsx`). Not on the main picks page anymore at
+  all, by explicit request ("we will focus more on this later").
+
+---
+
+## 10. How to use this file
 
 Point a new Claude session at this file (paste it in, upload it, or — if
 using Claude Projects — add it to the project's knowledge so it's always

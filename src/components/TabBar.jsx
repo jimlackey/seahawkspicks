@@ -1,5 +1,5 @@
 const BASE_TABS = [
-  { id: "week", label: "This Week" },
+  { id: "picks", label: "Picks" },
   { id: "results", label: "Results" },
   { id: "standings", label: "Standings" },
 ];
