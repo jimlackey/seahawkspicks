@@ -296,10 +296,11 @@ real rewrite — and from that point on, only test via
 `ThisWeek.jsx`/`PlayerPickCard.jsx`, both deleted). One `<table>` row per
 week (1-18, always all 18 rendered regardless of whether a `games` row
 exists yet for that week). Columns: week #, kickoff time (Pacific,
-compact — `formatKickoff` in `PickRow.jsx`), home team, away team, line
-(`spread, total`), your Hawks-score pick, your opponent-score pick,
-computed predicted total + inferred O/U (display only, via
-`inferOverUnder` from §2), and a small save-status dot.
+compact — `formatKickoff` in `src/lib/format.js`), home team, away team,
+line (`formatLine`, e.g. `-3.5/44.0` — always one decimal), your
+Hawks-score pick, your opponent-score pick, computed predicted total +
+inferred O/U (display only, via `inferOverUnder` from §2), and a small
+save-status dot.
 
 - **Autosave, no Save button**: each row debounces 600ms after the last
   keystroke once both score fields are valid non-negative integers, then
@@ -311,38 +312,72 @@ computed predicted total + inferred O/U (display only, via
   `game.commence_time` has passed. A week with no synced `games` row yet
   is treated as unlocked/editable — consistent with "any week not yet
   played" from the user's own framing of the requirement.
-- **Team display**: full name on wide screens, 3-letter code
-  (`src/lib/teams.js`, `teamCode()`) on narrow ones — done via two
-  sibling spans (`.team-short`/`.team-full`) toggled by a CSS media
-  query at 700px, not JS, so there's no layout-measuring logic to
-  maintain.
+- **Team display**: small color-coded badge (`teamInfo()` in
+  `src/lib/teams.js`, extracted to `src/components/TeamBadge.jsx` for
+  reuse — real team brand colors, not logo artwork; see the "Team logos"
+  note in §8) — full team name shown alongside the badge only on wide
+  screens (`.team-full` toggled by a CSS media query at 700px, not JS).
 - **Mobile width was the whole point** of this design — deliberately
   tight padding/font-size in `.picks-table` CSS to fit 9 columns without
-  horizontal scroll on a phone. If that turns out not to work in
-  practice, the user already floated a fallback (a two-line-per-week
-  layout) — ask before redesigning again from scratch, since "let's see
-  how it works out" was the explicit framing, not a firm commitment to
-  the single-line approach.
-
-**Tightening pass (still narrow on first try)**: user reported a small
-horizontal scroll on mobile even with the original sizing. Response:
-replaced team full-name text (up to 90px ellipsis width each, ×2
-columns) with small color-coded badges (~20-26px, no text on mobile),
-shrank all padding/font-sizes further, narrowed the score inputs to
-24px, hid number-input spinner arrows (were eating into that width),
-and shortened the line format from "-3.5, 44.5" to "-3.5/44.5" and the
-kickoff time by dropping the comma. Not verified on an actual device —
-if it's still scrolling, the next lever is the two-line-per-week
-fallback design, not further micro-tightening of this one.
+  horizontal scroll on a phone. First attempt still had a small scroll;
+  fixed by replacing team full-name text (up to 90px ellipsis each, ×2
+  columns) with the compact badges above, shrinking padding/fonts
+  further, narrowing score inputs to 24px, hiding number-input spinner
+  arrows (were eating into that width), and shortening the line format
+  to `-3.5/44.5` and kickoff time by dropping the comma. **Confirmed
+  fixed** — no more horizontal scroll on the user's phone.
+- **Line formatting**: `src/lib/format.js`'s `formatLine()` always shows
+  one decimal (`toFixed(1)`), so an even-number line like `-6` displays
+  as `-6.0`, matching `-3.5`'s style. Shared by `PickRow.jsx` and
+  `ResultsTile.jsx` (§10) — don't reintroduce a separate un-padded
+  formatter in either.
 - **Sync odds/scores moved to Admin-only** (`AdminPanel.jsx`, a week-number
   input + button calling `syncOddsAndScores(week)` from `db.js`, which
   wraps the `/api/sync-week` fetch + `/api/games` PUT that used to live
   in `App.jsx`/`ThisWeek.jsx`). Not on the main picks page anymore at
   all, by explicit request ("we will focus more on this later").
+- **Full season schedule seeded** from NFL.com for weeks 1-17 (week 18
+  @ Rams has no date yet — NFL sets it only after Week 17 finishes).
+  Seed script updated `opponent`/`home`/`commence_time` only, via
+  `on conflict do update` naming just those columns, so it never
+  touched already-recorded spread/total/scores for weeks 1-2. New rows
+  got no spread/total (left null) since those are future games — don't
+  fabricate lines for them.
 
 ---
 
-## 10. How to use this file
+## 10. Results page (weekly tiles, full transparency)
+
+`src/components/Results.jsx` + `ResultsTile.jsx` (replaced the old
+single-column list version). One tile per week, **all 18 weeks always
+shown** (not just completed ones), newest week first.
+
+- **Explicit privacy reversal from the Picks page**: unlike
+  `PicksGrid`/`PickRow` (which only show the current user's own pick),
+  Results shows **everyone's picks for every week, including future
+  ones, as soon as they're submitted** — no hide-until-kickoff here.
+  This was a deliberate, explicit user instruction ("Picks are publicly
+  visible as soon as they are made") specific to this page. Don't
+  "fix" this into matching the Picks page's privacy model — they're
+  intentionally different.
+- **Layout per tile**: header row (week #, kickoff time, away @ home via
+  `TeamBadge`, spread/total line, final score once complete), then three
+  side-by-side player sub-tiles sorted **alphabetically by display name**
+  (not roster/insertion order).
+- **Medal styling** only applies once `game.completed` is true (ranking
+  is meaningless before that): gold/silver/bronze border + tinted
+  background via `scoreWeek`/`rankWeek` from `src/lib/scoring.js` — same
+  functions Standings uses, so ranking logic isn't duplicated. Colors
+  are new CSS vars `--silver`/`--bronze` added alongside the existing
+  `--gold`.
+- **Explicitly out of scope for now**: only 3 players are laid out
+  (fixed 3-column grid). If the pool grows beyond 3, this tile layout
+  needs revisiting — user said so explicitly, don't try to make it
+  N-player-flexible preemptively.
+
+---
+
+## 11. How to use this file
 
 Point a new Claude session at this file (paste it in, upload it, or — if
 using Claude Projects — add it to the project's knowledge so it's always

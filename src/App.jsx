@@ -134,7 +134,7 @@ export default function App() {
           {tab === "picks" && (
             <PicksGrid games={games} myPicks={myPicksByWeek} onSavePick={handleSavePick} />
           )}
-          {tab === "results" && <Results weeks={scoringWeeks} roster={roster} />}
+          {tab === "results" && <Results games={games} picksByWeek={picksMap} roster={roster} />}
           {tab === "standings" && <Standings weeks={scoringWeeks} roster={roster} />}
           {tab === "admin" && isAdmin && <AdminPanel onGamesChanged={loadData} />}
         </>

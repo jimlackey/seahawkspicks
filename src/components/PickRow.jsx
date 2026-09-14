@@ -1,26 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { inferOverUnder } from "../lib/scoring.js";
-import { teamInfo } from "../lib/teams.js";
+import { formatKickoff, formatLine } from "../lib/format.js";
+import TeamBadge from "./TeamBadge.jsx";
 
 const SAVE_DEBOUNCE_MS = 600;
-
-function formatKickoff(iso) {
-  if (!iso) return "TBD";
-  const d = new Date(iso);
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Los_Angeles",
-    weekday: "short",
-    month: "numeric",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).formatToParts(d);
-  const get = (type) => parts.find((p) => p.type === type)?.value ?? "";
-  // "Wed 9/9 5:30p" — compact, single lowercase am/pm letter, no comma.
-  const ampm = get("dayPeriod").toLowerCase().charAt(0);
-  return `${get("weekday")} ${get("month")}/${get("day")} ${get("hour")}:${get("minute")}${ampm}`;
-}
 
 export default function PickRow({ week, game, existingPick, onSave }) {
   const [hawks, setHawks] = useState(existingPick ? String(existingPick.hawks_score) : "");
@@ -72,7 +55,6 @@ export default function PickRow({ week, game, existingPick, onSave }) {
   const homeTeamName = home === true ? "Seattle Seahawks" : home === false ? opponent : null;
   const awayTeamName = home === true ? opponent : home === false ? "Seattle Seahawks" : null;
 
-  const formatLine = (n) => (n == null ? "—" : n.toFixed(1));
   const lineText =
     game && (game.spread != null || game.total != null)
       ? `${formatLine(game.spread)}/${formatLine(game.total)}`
@@ -127,18 +109,6 @@ export default function PickRow({ week, game, existingPick, onSave }) {
         <StatusDot status={locked ? "locked" : status} />
       </td>
     </tr>
-  );
-}
-
-function TeamBadge({ fullName }) {
-  const { code, color } = teamInfo(fullName);
-  return (
-    <span className="team-cell">
-      <span className="team-badge" style={{ background: color }}>
-        {code}
-      </span>
-      <span className="team-full">{fullName ?? "—"}</span>
-    </span>
   );
 }
 

@@ -7,6 +7,8 @@
   --paper: #f4f5f1;
   --ink: #14181b;
   --gold: #d8a73d;
+  --silver: #a8adb3;
+  --bronze: #b08d57;
 
   --display: "Big Shoulders Display", sans-serif;
   --body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
@@ -317,75 +319,136 @@ button {
   cursor: default;
 }
 
-/* ---------- Results ---------- */
+/* ---------- Results (weekly tiles) ---------- */
 
-.week-result {
-  border-bottom: 1px solid var(--grey-light);
-  padding: 16px 0;
+.results-tile {
+  border: 1px solid var(--grey-light);
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
 }
 
-.week-result:last-child {
-  border-bottom: none;
-}
-
-.week-result-head {
+.results-tile-header {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
   margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--grey-light);
+  font-size: 13px;
 }
 
-.week-result-head .week-label {
+.results-week {
   font-family: var(--display);
   font-weight: 700;
-  font-size: 17px;
+  font-size: 16px;
   color: var(--navy);
 }
 
-.week-result-head .final-score {
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: 17px;
-}
-
-.pick-rows {
-  display: grid;
-  gap: 6px;
-}
-
-.pick-row {
-  display: grid;
-  grid-template-columns: 90px 1fr auto;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-}
-
-.pick-row .player-name {
-  font-weight: 600;
-}
-
-.pick-row .picked-score {
+.results-time {
   color: var(--grey);
+  font-size: 12px;
+}
+
+.results-matchup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.results-matchup .at-sign {
+  color: var(--grey);
+  font-size: 11px;
+}
+
+.results-line {
+  color: var(--grey);
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
 
-.pick-row .diff-badge {
-  font-size: 12px;
+.results-final {
+  font-family: var(--display);
+  font-weight: 700;
+  color: var(--navy);
+  margin-left: auto;
+}
+
+.player-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.player-tile {
+  border: 1px solid var(--grey-light);
+  border-radius: 5px;
+  padding: 8px;
+  text-align: center;
+  background: var(--paper);
+}
+
+.player-tile-name {
   font-weight: 600;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.player-tile-score {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--navy);
+}
+
+.player-tile-total {
+  font-size: 11px;
   color: var(--grey);
+  margin-top: 2px;
 }
 
-.pick-row.winner .player-name {
-  color: var(--gold);
+.player-tile-diff {
+  font-size: 10.5px;
+  color: var(--grey);
+  margin-top: 4px;
 }
 
-.pick-row.winner .diff-badge {
-  color: var(--gold);
+.player-tile.medal-gold {
+  border-color: var(--gold);
+  border-width: 2px;
+  background: #fbf3de;
 }
 
-.pick-row.missed .picked-score {
-  font-style: italic;
+.player-tile.medal-gold .player-tile-score {
+  color: #8a6d16;
+}
+
+.player-tile.medal-silver {
+  border-color: var(--silver);
+  border-width: 2px;
+  background: #f1f1f2;
+}
+
+.player-tile.medal-bronze {
+  border-color: var(--bronze);
+  border-width: 2px;
+  background: #f5ece0;
+}
+
+@media (max-width: 420px) {
+  .player-tiles {
+    gap: 5px;
+  }
+  .player-tile {
+    padding: 6px 4px;
+  }
+  .player-tile-name {
+    font-size: 10.5px;
+  }
+  .player-tile-score {
+    font-size: 15px;
+  }
 }
 
 /* ---------- Standings ---------- */
