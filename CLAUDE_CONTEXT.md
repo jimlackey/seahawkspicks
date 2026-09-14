@@ -379,7 +379,25 @@ if this comes up again, ascending is the confirmed preference).
 
 ---
 
-## 11. How to use this file
+## 11. Standings page (table, not stacked rows)
+
+`src/components/Standings.jsx` — a real `<table>` now (was a flex-row
+list). Columns: **Place, Name, 1st, 2nd, 3rd, Total**. Sorted by total
+points descending.
+
+- Each of the 1st/2nd/3rd columns shows **both** the count and the
+  points that count earned, e.g. `2` (bold, larger) with `(6 pts)`
+  (small, grey) beneath/beside it — computed as `count *
+  STANDINGS_POINTS[place]` (imported from `scoring.js`, not
+  hand-hardcoded 3/1/0 again).
+- 3rd-place points are always `(0 pts)` since `STANDINGS_POINTS[3] = 0`
+  — that's correct per the scoring rules (§2), not a display bug.
+- Total column is the same `computeSeasonStandings` output as before —
+  no scoring logic changed, only how it's rendered.
+
+---
+
+## 12. How to use this file
 
 Point a new Claude session at this file (paste it in, upload it, or — if
 using Claude Projects — add it to the project's knowledge so it's always

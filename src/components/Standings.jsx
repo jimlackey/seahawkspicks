@@ -1,4 +1,4 @@
-import { computeSeasonStandings } from "../lib/scoring.js";
+import { computeSeasonStandings, STANDINGS_POINTS } from "../lib/scoring.js";
 
 export default function Standings({ weeks, roster }) {
   if (weeks.length === 0) {
@@ -14,19 +14,37 @@ export default function Standings({ weeks, roster }) {
     .sort((a, b) => b.points - a.points);
 
   return (
-    <div className="standings-list">
-      {ranked.map((row, i) => (
-        <div className="standings-row" key={row.player.participantId}>
-          <span className="place">{i + 1}</span>
-          <span>
-            <span className="name">{row.player.displayName}</span>
-            <span className="record">
-              {row.firsts}-{row.seconds}-{row.thirds}
-            </span>
-          </span>
-          <span className="points">{row.points}</span>
-        </div>
-      ))}
-    </div>
+    <table className="standings-table">
+      <thead>
+        <tr>
+          <th className="place-col">Place</th>
+          <th className="name-col">Name</th>
+          <th>1st</th>
+          <th>2nd</th>
+          <th>3rd</th>
+          <th className="total-col">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {ranked.map((row, i) => (
+          <tr key={row.player.participantId}>
+            <td className="place-col">{i + 1}</td>
+            <td className="name-col">{row.player.displayName}</td>
+            <PlaceCell count={row.firsts} points={row.firsts * STANDINGS_POINTS[1]} />
+            <PlaceCell count={row.seconds} points={row.seconds * STANDINGS_POINTS[2]} />
+            <PlaceCell count={row.thirds} points={row.thirds * STANDINGS_POINTS[3]} />
+            <td className="total-col">{row.points}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function PlaceCell({ count, points }) {
+  return (
+    <td>
+      <span className="place-count">{count}</span> <span className="place-points">({points} pts)</span>
+    </td>
   );
 }

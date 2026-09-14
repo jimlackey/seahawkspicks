@@ -472,41 +472,60 @@ button {
 
 /* ---------- Standings ---------- */
 
-.standings-list {
-  display: grid;
-  gap: 2px;
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.standings-row {
-  display: grid;
-  grid-template-columns: 28px 1fr auto;
-  align-items: baseline;
-  gap: 14px;
-  padding: 14px 0;
+.standings-table th {
+  text-align: center;
+  font-weight: 600;
+  color: var(--grey);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0 4px 8px;
   border-bottom: 1px solid var(--grey-light);
 }
 
-.standings-row .place {
+.standings-table td {
+  text-align: center;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--grey-light);
+}
+
+.standings-table .place-col {
+  width: 32px;
   font-family: var(--display);
   font-size: 16px;
   color: var(--grey);
 }
 
-.standings-row .name {
-  font-size: 17px;
+.standings-table .name-col {
+  text-align: left;
+  font-size: 16px;
   font-weight: 600;
 }
 
-.standings-row .record {
-  font-size: 13px;
-  color: var(--grey);
-  font-weight: 400;
-  margin-left: 8px;
+.standings-table th.name-col {
+  text-align: left;
 }
 
-.standings-row .points {
+.place-count {
   font-family: var(--display);
-  font-size: 26px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.place-points {
+  font-size: 11px;
+  color: var(--grey);
+}
+
+.standings-table .total-col {
+  font-family: var(--display);
+  font-size: 24px;
   font-weight: 700;
   color: var(--navy);
 }
