@@ -5,6 +5,7 @@ import {
   extractSeahawksLines,
   fetchNflOdds,
   getSeahawksClosingLines,
+  getUsageQuota,
 } from "./oddsApi.js";
 
 const sampleEvent = {
@@ -124,4 +125,27 @@ test("getSeahawksClosingLines handles no Seahawks game found (e.g. bye week)", a
   const result = await getSeahawksClosingLines("good-key", fakeFetch);
   assert.equal(result.game, null);
   assert.equal(result.lines, null);
+});
+
+test("getUsageQuota parses the free /sports endpoint's usage headers", async () => {
+  const fakeFetch = async () => ({
+    ok: true,
+    headers: {
+      get: (h) => (h === "x-requests-remaining" ? "487" : h === "x-requests-used" ? "13" : null),
+    },
+    json: async () => [],
+  });
+  const result = await getUsageQuota("good-key", fakeFetch);
+  assert.equal(result.requestsRemaining, 487);
+  assert.equal(result.requestsUsed, 13);
+});
+
+test("getUsageQuota throws a descriptive error on a failed request", async () => {
+  const fakeFetch = async () => ({
+    ok: false,
+    status: 401,
+    statusText: "Unauthorized",
+    text: async () => "Invalid API key",
+  });
+  await assert.rejects(() => getUsageQuota("bad-key", fakeFetch), /Odds API request failed: 401/);
 });

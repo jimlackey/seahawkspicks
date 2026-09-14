@@ -7,6 +7,7 @@ import {
   setParticipantRole,
   updateParticipantProfile,
   syncOddsAndScores,
+  getOddsApiUsage,
 } from "../lib/db.js";
 
 export default function AdminPanel({ onGamesChanged }) {
@@ -16,8 +17,19 @@ export default function AdminPanel({ onGamesChanged }) {
   const [syncWeek, setSyncWeek] = useState("");
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState(null);
+  const [usage, setUsage] = useState(null);
+  const [usageError, setUsageError] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  async function loadUsage() {
+    setUsageError(null);
+    try {
+      setUsage(await getOddsApiUsage());
+    } catch (err) {
+      setUsageError(err.message);
+    }
+  }
 
   async function load() {
     setError(null);
@@ -34,6 +46,7 @@ export default function AdminPanel({ onGamesChanged }) {
 
   useEffect(() => {
     load();
+    loadUsage();
   }, []);
 
   async function handleAdd(e) {
@@ -88,6 +101,7 @@ export default function AdminPanel({ onGamesChanged }) {
         }`
       );
       onGamesChanged?.();
+      await loadUsage();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -100,6 +114,32 @@ export default function AdminPanel({ onGamesChanged }) {
   return (
     <div>
       {error && <div className="error-banner">{error}</div>}
+
+      <h3 style={{ fontFamily: "var(--display)", color: "var(--navy)", fontSize: 18, marginBottom: 10 }}>
+        Odds API usage
+      </h3>
+      <div style={{ marginBottom: 32, fontSize: 14 }}>
+        {usageError ? (
+          <span style={{ color: "#8a2f26" }}>{usageError}</span>
+        ) : usage ? (
+          <>
+            <span style={{ fontFamily: "var(--display)", fontWeight: 700, fontSize: 22, color: "var(--navy)" }}>
+              {usage.requestsRemaining}
+            </span>{" "}
+            <span style={{ color: "var(--grey)" }}>
+              remaining
+              {usage.requestsRemaining != null && usage.requestsUsed != null
+                ? ` of ${usage.requestsRemaining + usage.requestsUsed} this cycle (${usage.requestsUsed} used)`
+                : ""}
+            </span>
+            <div style={{ fontSize: 11, color: "var(--grey)", marginTop: 2 }}>
+              Checking this doesn't use any credits — free to refresh anytime.
+            </div>
+          </>
+        ) : (
+          <span style={{ color: "var(--grey)" }}>Loading…</span>
+        )}
+      </div>
 
       <h3 style={{ fontFamily: "var(--display)", color: "var(--navy)", fontSize: 18, marginBottom: 10 }}>
         Sync odds/scores

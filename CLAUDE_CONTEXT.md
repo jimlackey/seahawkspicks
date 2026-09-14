@@ -442,7 +442,46 @@ mobile — the same class of problem as §9's picks-table scroll issue.
 
 ---
 
-## 14. How to use this file
+## 14. Score updates: manual, admin-only (and its real gaps)
+
+There is no automatic score-updating — no cron, no polling, no trigger
+on game completion. The only mechanism is the Admin tab's "Sync
+odds/scores" (built in §9), which is entirely manual: an admin types a
+week number and clicks Sync.
+
+**Two real correctness gaps the user was told about explicitly** (not
+hidden as "future work" — surfaced directly when asked how this works):
+
+1. The sync doesn't verify which week it's writing to. It fetches
+   whatever game The Odds API considers "current" and trusts whatever
+   week number the admin typed. Type the wrong week, silently overwrite
+   the wrong row — the same class of bug as the SEA/ARI mislabeling
+   the user caught manually earlier (§ schedule-seeding note).
+2. The scores endpoint's 3-day rolling window (§3) means if nobody
+   syncs within ~3 days of a game finishing, the real result becomes
+   unrecoverable through the API — manual SQL entry (as done for Week 1)
+   becomes the only option.
+
+**As of this note, no decision has been made yet** on which fix to
+pursue (Vercel Cron for full automation, auto-detecting the week number
+to remove the mistype risk, or just living with manual + care). If a
+future session lands here, check whether that decision happened later
+in conversation before assuming it's still open.
+
+### Odds API usage/quota display (built alongside this)
+
+`getUsageQuota()` in `src/lib/oddsApi.js` hits `GET /v4/sports` — an
+endpoint The Odds API's own docs confirm costs **0 credits** — to read
+the `x-requests-remaining`/`x-requests-used` response headers. Exposed
+as `GET /api/admin/usage` (admin-only) and shown at the top of the
+Admin tab, refreshed on load and after every real sync. This means
+**quota can be checked for free, as often as wanted**, unlike the
+actual odds/scores calls which do cost credits — don't accidentally
+build a "cheaper" quota check later; this one already costs nothing.
+
+---
+
+## 15. How to use this file
 
 Point a new Claude session at this file (paste it in, upload it, or — if
 using Claude Projects — add it to the project's knowledge so it's always

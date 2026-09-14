@@ -14,6 +14,33 @@
 
 const SEAHAWKS_NAME = "Seattle Seahawks";
 const BASE_URL = "https://api.the-odds-api.com/v4/sports/americanfootball_nfl/odds";
+const SPORTS_URL = "https://api.the-odds-api.com/v4/sports";
+
+/**
+ * Checks remaining API quota WITHOUT spending any credits — the /v4/sports
+ * endpoint is explicitly free (0 cost) per The Odds API's docs, but still
+ * returns the same x-requests-remaining/x-requests-used headers as every
+ * other call. Safe to call as often as needed (e.g. every Admin page load)
+ * without eating into the monthly quota it's reporting on.
+ *
+ * @param {string} apiKey
+ * @param {typeof fetch} [fetchImpl]
+ * @returns {Promise<{ requestsRemaining: number|null, requestsUsed: number|null }>}
+ */
+export async function getUsageQuota(apiKey, fetchImpl = fetch) {
+  const url = `${SPORTS_URL}?apiKey=${apiKey}`;
+  const res = await fetchImpl(url);
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Odds API request failed: ${res.status} ${res.statusText} ${body}`);
+  }
+  const remaining = res.headers.get("x-requests-remaining");
+  const used = res.headers.get("x-requests-used");
+  return {
+    requestsRemaining: remaining != null ? Number(remaining) : null,
+    requestsUsed: used != null ? Number(used) : null,
+  };
+}
 
 /**
  * Fetches raw NFL odds events from The Odds API.

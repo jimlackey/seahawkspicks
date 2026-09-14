@@ -156,3 +156,8 @@ export function updateParticipantProfile(participantId, { displayName, email }) 
     body: JSON.stringify({ participantId, displayName, email }),
   });
 }
+
+/** Free to call — the underlying /v4/sports check costs 0 API credits. */
+export function getOddsApiUsage() {
+  return apiFetch("/api/admin/usage");
+}
