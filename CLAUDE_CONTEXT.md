@@ -560,6 +560,20 @@ sync button.
   clear error, on a mismatch** — this was gap #1 from §14's "two real
   correctness gaps" note. Only closes it for weeks with a schedule row
   already (all of 1-17); week 18 still has no row to check against.
+- **Bug hit and fixed**: clicking Update Odds/Score on a week with no
+  existing `games` row (week 18, or any week before its schedule is
+  known) crashed with `null value in column "opponent"... violates
+  not-null constraint` — the write only sent spread/total (or
+  score/completed), but an INSERT (no row to conflict on) needs the
+  NOT NULL opponent/home/commence_time too. Fixed: `syncOdds`/
+  `syncScore` in `db.js` now check whether `expectedOpponent` was
+  passed (truthy only when a row already exists, since `opponent` is
+  NOT NULL whenever a row exists) — if not, they backfill
+  opponent/home/commenceTime from the API response as part of the same
+  write, rather than omitting them. This is safe specifically because
+  there's nothing existing to protect in that case; it doesn't apply
+  once a row exists (existing behavior — only touch the fields that
+  button is responsible for — is unchanged for weeks 1-17).
 - **Both buttons stay live for past weeks on purpose** (explicit user
   request) — Update Score can correct a wrong final score after the
   fact.

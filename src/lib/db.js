@@ -86,6 +86,23 @@ export function syncGame(weekData) {
  * concept of "week number," so without this check a wrong guess could
  * silently write the wrong game's line into the wrong week.
  */
+/**
+ * Pulls the Seahawks' current closing spread/total (server-side, via
+ * /api/sync-week?type=odds — costs 2 credits) and writes spread/total
+ * into `games` for the given week.
+ *
+ * If this week has no existing game row yet (e.g. a week whose opponent
+ * the NFL hasn't announced), there's nothing to protect — so the API's
+ * returned opponent/home/kickoff time get written too, backfilling the
+ * schedule. If a row already exists, only spread/total are touched;
+ * opponent/home/commence_time (from the schedule seed) are left alone.
+ *
+ * Safety check: if `expectedOpponent` is provided (i.e. we already have a
+ * scheduled opponent for this week) and the API's returned game is for a
+ * different team, this throws instead of writing — the Odds API has no
+ * concept of "week number," so without this check a wrong guess could
+ * silently write the wrong game's line into the wrong week.
+ */
 export async function syncOdds(week, expectedOpponent) {
   const data = await apiFetch("/api/sync-week?type=odds");
   if (!data.game && data.message) {
@@ -96,15 +113,23 @@ export async function syncOdds(week, expectedOpponent) {
       `Mismatch: expected ${expectedOpponent} for week ${week}, but the API returned ${data.opponent}. Not saved — check the schedule.`
     );
   }
-  await syncGame({ week, spread: data.spread, total: data.total });
+  const payload = { week, spread: data.spread, total: data.total };
+  if (!expectedOpponent) {
+    // No existing row for this week — backfill the schedule fields too.
+    payload.opponent = data.opponent;
+    payload.home = data.home;
+    payload.commenceTime = data.commenceTime;
+  }
+  await syncGame(payload);
   return data;
 }
 
 /**
  * Pulls the Seahawks' current/latest result (server-side, via
- * /api/sync-week?type=score — costs 2 credits) and writes ONLY
+ * /api/sync-week?type=score — costs 2 credits) and writes
  * hawksScore/oppScore/completed into `games` for the given week. Same
- * opponent-mismatch safety check as syncOdds.
+ * no-existing-row backfill and opponent-mismatch safety check as
+ * syncOdds.
  */
 export async function syncScore(week, expectedOpponent) {
   const data = await apiFetch("/api/sync-week?type=score");
@@ -116,7 +141,13 @@ export async function syncScore(week, expectedOpponent) {
       `Mismatch: expected ${expectedOpponent} for week ${week}, but the API returned ${data.opponent}. Not saved — check the schedule.`
     );
   }
-  await syncGame({ week, hawksScore: data.hawksScore, oppScore: data.oppScore, completed: data.completed });
+  const payload = { week, hawksScore: data.hawksScore, oppScore: data.oppScore, completed: data.completed };
+  if (!expectedOpponent) {
+    payload.opponent = data.opponent;
+    payload.home = data.home;
+    payload.commenceTime = data.commenceTime;
+  }
+  await syncGame(payload);
   return data;
 }
 
