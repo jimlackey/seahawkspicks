@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     // "Update Score") only ever touches the columns actually provided —
     // never overwrites an unrelated field with null just because this
     // particular caller didn't send it.
-    const fields = { pool_id: pool.id, season: SEASON, week: body.week };
+    const fields = {};
     if (body.opponent !== undefined) fields.opponent = body.opponent;
     if (body.home !== undefined) fields.home = body.home;
     if (body.commenceTime !== undefined) fields.commence_time = body.commenceTime;
@@ -46,13 +46,46 @@ export default async function handler(req, res) {
     if (body.completed !== undefined) fields.completed = body.completed;
     fields.updated_at = new Date().toISOString();
 
-    const { error } = await supabaseAdmin
+    const { data: existing } = await supabaseAdmin
       .from("games")
-      .upsert(fields, { onConflict: "pool_id,season,week" });
-    if (error) {
-      res.status(500).json({ error: error.message });
-      return;
+      .select("id")
+      .eq("pool_id", pool.id)
+      .eq("season", SEASON)
+      .eq("week", body.week)
+      .maybeSingle();
+
+    if (existing) {
+      // Plain UPDATE — only ever touches the columns present in `fields`.
+      // Deliberately NOT an upsert here: Postgres validates NOT NULL
+      // constraints on the proposed row of INSERT ... ON CONFLICT DO
+      // UPDATE before it even checks for a conflict, so omitting
+      // opponent/home/commence_time from that kind of call fails even
+      // when the row already exists and would only take the UPDATE path.
+      // A plain UPDATE has no such issue since it never constructs a
+      // candidate insert row.
+      const { error } = await supabaseAdmin.from("games").update(fields).eq("id", existing.id);
+      if (error) {
+        res.status(500).json({ error: error.message });
+        return;
+      }
+    } else {
+      // Genuinely new row — this really is an INSERT, so the NOT NULL
+      // columns must actually be present.
+      if (fields.opponent == null || fields.home == null || fields.commence_time == null) {
+        res.status(400).json({
+          error: "This week has no schedule yet — opponent, home/away, and kickoff time are required to create it.",
+        });
+        return;
+      }
+      const { error } = await supabaseAdmin
+        .from("games")
+        .insert({ pool_id: pool.id, season: SEASON, week: body.week, ...fields });
+      if (error) {
+        res.status(500).json({ error: error.message });
+        return;
+      }
     }
+
     res.status(200).json({ success: true });
     return;
   }

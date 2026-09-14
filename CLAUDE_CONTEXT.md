@@ -560,20 +560,39 @@ sync button.
   clear error, on a mismatch** — this was gap #1 from §14's "two real
   correctness gaps" note. Only closes it for weeks with a schedule row
   already (all of 1-17); week 18 still has no row to check against.
-- **Bug hit and fixed**: clicking Update Odds/Score on a week with no
-  existing `games` row (week 18, or any week before its schedule is
-  known) crashed with `null value in column "opponent"... violates
-  not-null constraint` — the write only sent spread/total (or
-  score/completed), but an INSERT (no row to conflict on) needs the
-  NOT NULL opponent/home/commence_time too. Fixed: `syncOdds`/
-  `syncScore` in `db.js` now check whether `expectedOpponent` was
-  passed (truthy only when a row already exists, since `opponent` is
-  NOT NULL whenever a row exists) — if not, they backfill
-  opponent/home/commenceTime from the API response as part of the same
-  write, rather than omitting them. This is safe specifically because
-  there's nothing existing to protect in that case; it doesn't apply
-  once a row exists (existing behavior — only touch the fields that
-  button is responsible for — is unchanged for weeks 1-17).
+- **Bug hit twice, two different real causes** — same error message
+  both times (`null value in column "opponent"... violates not-null
+  constraint`), but don't assume it's the first cause again if it ever
+  recurs:
+  1. **First cause** (weeks with no `games` row yet, e.g. week 18):
+     the write only sent spread/total, but an INSERT needs the NOT NULL
+     opponent/home/commence_time too. Fixed client-side: `syncOdds`/
+     `syncScore` in `db.js` backfill opponent/home/commenceTime from the
+     API response when `expectedOpponent` is falsy (i.e. no existing
+     row — `opponent` is NOT NULL whenever a row exists, so its absence
+     reliably signals "new row").
+  2. **Second, more fundamental cause** — this is the one that actually
+     hit in practice, on a week that *already had* a schedule row: this
+     is genuine, documented PostgreSQL behavior (confirmed by the
+     Postgres core team in bug #16706, not a Supabase quirk) —
+     `INSERT ... ON CONFLICT DO UPDATE` validates NOT NULL constraints
+     on the *proposed insert row* **before** it ever checks for a
+     conflict. So a `.upsert()` call that omits `opponent` fails
+     immediately even when the row already exists and would only take
+     the UPDATE branch. Fix #1 (client-side backfill for new rows)
+     didn't touch this at all, because it still applies to every
+     partial update, existing row or not.
+  **Real fix** (`api/games.js`'s PUT handler): check whether a row
+  exists first (`select().maybeSingle()`), then branch — existing row →
+  plain `.update(fields).eq("id", existing.id)` (never constructs an
+  insert candidate row, so NOT NULL on omitted columns is a non-issue);
+  no existing row → real `.insert()`, which 400s with a clear message
+  if opponent/home/commence_time are still missing rather than letting
+  Postgres throw a cryptic constraint error. **General lesson**: don't
+  reach for `.upsert()` for a partial-field update against a table with
+  NOT NULL columns beyond the conflict key — it silently requires every
+  NOT NULL column on every call, existing row or not. Check-then-branch
+  (update vs insert) is the correct pattern here, not upsert.
 - **Both buttons stay live for past weeks on purpose** (explicit user
   request) — Update Score can correct a wrong final score after the
   fact.
