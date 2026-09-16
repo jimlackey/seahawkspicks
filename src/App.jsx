@@ -26,7 +26,8 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
-  // Check for an existing session on load.
+  // Check for an existing session — independent of loading the public
+  // data below, so a logged-out visitor isn't blocked on this resolving.
   useEffect(() => {
     getCurrentParticipant()
       .then(setMe)
@@ -51,9 +52,11 @@ export default function App() {
     }
   }, []);
 
+  // Results/Standings/Rules are public — load this data immediately,
+  // regardless of auth state. Only the Picks tab itself is gated.
   useEffect(() => {
-    if (me) loadData();
-  }, [me, loadData]);
+    loadData();
+  }, [loadData]);
 
   const picksMap = useMemo(() => picksByWeek(picks), [picks]);
   const myPicksByWeek = useMemo(() => {
@@ -94,47 +97,41 @@ export default function App() {
     setMe(null);
   }
 
-  if (me === undefined) {
-    return (
-      <div className="app-shell">
-        <div className="empty-state">Loading…</div>
-      </div>
-    );
-  }
-
-  if (!me) {
-    return (
-      <div className="app-shell">
-        <Login onLoggedIn={setMe} />
-      </div>
-    );
-  }
-
-  const isAdmin = me.role === "admin";
+  const isAdmin = me?.role === "admin";
 
   return (
     <div className="app-shell">
       <header className="app-header">
         <h1>Seahawks Score Picks</h1>
-        <button
-          onClick={handleLogout}
-          style={{ background: "none", border: "none", color: "var(--grey)", fontSize: 13, cursor: "pointer" }}
-        >
-          Log Out
-        </button>
+        {me && (
+          <button
+            onClick={handleLogout}
+            style={{ background: "none", border: "none", color: "var(--grey)", fontSize: 13, cursor: "pointer" }}
+          >
+            Log Out
+          </button>
+        )}
       </header>
 
       <TabBar active={tab} onChange={setTab} isAdmin={isAdmin} />
 
       {loadError && <div className="error-banner">Couldn't load data: {loadError}</div>}
 
-      {loading ? (
+      {loading || me === undefined ? (
         <div className="empty-state">Loading…</div>
       ) : (
         <>
-          {tab === "picks" && (
-            <PicksGrid games={games} myPicks={myPicksByWeek} onSavePick={handleSavePick} />
-          )}
+          {tab === "picks" &&
+            (me ? (
+              <PicksGrid games={games} myPicks={myPicksByWeek} onSavePick={handleSavePick} />
+            ) : (
+              <div>
+                <p style={{ fontSize: 14, color: "var(--grey)", marginBottom: 20 }}>
+                  Log in to enter your picks.
+                </p>
+                <Login onLoggedIn={setMe} />
+              </div>
+            ))}
           {tab === "results" && <Results games={games} picksByWeek={picksMap} roster={roster} />}
           {tab === "standings" && <Standings weeks={scoringWeeks} roster={roster} />}
           {tab === "rules" && <Rules />}

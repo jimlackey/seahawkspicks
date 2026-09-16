@@ -618,7 +618,55 @@ sync button.
 
 ---
 
-## 17. How to use this file
+## 17. Public pages: only Picks requires login
+
+**Explicit user decision, a real widening of who can see pool data**:
+Results, Standings, and Rules are now viewable by **anyone with the
+URL, no login at all** — not just logged-in participants (which was
+already the case before this change; Results already showed everyone's
+picks for every week to any authenticated user). This makes that same
+data visible to literally anyone on the internet who has the link.
+Only the **Picks** tab still requires auth — clicking it while logged
+out shows an inline login prompt (reusing `Login.jsx`, not a redirect
+or a separate page) instead of the picks grid.
+
+### Backend changes
+
+`api/games.js`, `api/picks.js`, `api/roster.js` all restructured the
+same way: resolve the pool first (no session needed), let `GET` proceed
+without a session, and only call `requireSession` inside the `PUT`
+branch (games/picks) or skip entirely (roster, which is GET-only).
+`api/admin/[action].js` and `api/auth/[action].js` are untouched — the
+Admin actions and all auth endpoints still require a session (and admin
+role, for the admin ones) exactly as before. This is a genuinely
+different pattern from `requireSession`'s original one-call-gates-
+everything shape (§5) — don't reflexively add `requireSession` back to
+the top of these three files' handlers, since that would silently
+re-lock the pages that were just intentionally opened up.
+
+**Privacy fix made while doing this, not just requested**: `picks`
+GET used to join `participants(email, display_name)` — unused by the
+frontend (confirmed via grep before removing it), but would have
+leaked every participant's email to an unauthenticated caller once
+this endpoint went public. Removed the join entirely; `picks` GET now
+selects only its own columns. `roster` GET was already
+email-safe (`participantId`/`displayName` only) and needed no such fix.
+
+### Frontend changes
+
+`App.jsx`'s top-level gate (`if (!me) return <Login/>`, blocking the
+entire app) is gone. Public data (`games`/`picks`/`roster`) now loads
+in its own `useEffect` independent of the session check — a logged-out
+visitor isn't blocked waiting on `getCurrentParticipant()` to resolve.
+`isAdmin` changed from `me.role === "admin"` to `me?.role === "admin"`
+since `me` can now meaningfully be `null` while the rest of the app
+renders fully (previously the whole component returned early before
+reaching that line whenever `me` was falsy, so the non-null assumption
+was safe then and would crash now if reintroduced elsewhere).
+
+---
+
+## 18. How to use this file
 
 Point a new Claude session at this file (paste it in, upload it, or — if
 using Claude Projects — add it to the project's knowledge so it's always

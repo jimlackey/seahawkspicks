@@ -1,17 +1,27 @@
-import { requireSession } from "./_lib/requireAuth.js";
+import { requireSession, POOL_SLUG } from "./_lib/requireAuth.js";
+import { getPoolBySlug } from "./_lib/pool.js";
 import { supabaseAdmin } from "./_lib/supabaseAdmin.js";
 
 const SEASON = 2026;
 
 export default async function handler(req, res) {
-  const ctx = await requireSession(req, res);
-  if (!ctx) return;
-  const { pool, session } = ctx;
+  // GET is public — picks are already visible to every logged-in
+  // participant regardless of week (see ResultsTile), so making that
+  // same data readable without a session is consistent, not a new
+  // exposure. Only writes require a session (checked in the PUT branch).
+  const pool = await getPoolBySlug(POOL_SLUG);
+  if (!pool) {
+    res.status(500).json({ error: "Pool not found." });
+    return;
+  }
 
   if (req.method === "GET") {
+    // Selecting only this table's own columns — no participant join.
+    // Nothing in the frontend uses one, and joining would leak emails
+    // to an unauthenticated caller now that this is public.
     const { data, error } = await supabaseAdmin
       .from("picks")
-      .select("*, participants(email, display_name)")
+      .select("*")
       .eq("pool_id", pool.id)
       .eq("season", SEASON)
       .order("week", { ascending: true });
@@ -24,6 +34,10 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "PUT") {
+    const ctx = await requireSession(req, res);
+    if (!ctx) return;
+    const { session } = ctx;
+
     const body = req.body ?? {};
     // participantId always comes from the session, never the request body —
     // otherwise anyone logged in could overwrite someone else's pick.
