@@ -376,6 +376,13 @@ if this comes up again, ascending is the confirmed preference).
   (fixed 3-column grid). If the pool grows beyond 3, this tile layout
   needs revisiting — user said so explicitly, don't try to make it
   N-player-flexible preemptively.
+- **Player sub-tile format** (revised from the original 2-line version):
+  name, then one row of `[SEA badge] hawks - opp [Opponent badge]`
+  (`TeamBadge`'s new `compact` prop — badge only, never expands to the
+  full team name regardless of screen width, unlike its default use in
+  the header/picks-table), then one line combining the checkmark +
+  Diff + predicted total/O-U (e.g. `✓ Diff 6 · 50 O`) when the game is
+  complete, or just the predicted total/O-U alone when it isn't.
 
 ---
 
@@ -666,7 +673,27 @@ was safe then and would crash now if reintroduced elsewhere).
 
 ---
 
-## 18. How to use this file
+## 18. Resend sandbox restriction (config, not a code bug)
+
+Hit in practice: login codes worked for `jimlackey@gmail.com` but
+failed for every other invited email with "Failed to send login code."
+**Not an app bug** — Resend's default `onboarding@resend.dev` sending
+address is sandboxed and can only deliver to the email address the
+Resend account itself was created with, until a real domain is
+verified. `.env.example` originally suggested `onboarding@resend.dev`
+as a fine default "for local dev" — true for local dev/testing only,
+misleading if left in place for the real deployment with real
+invitees. Fix is entirely outside this codebase: verify a domain (or
+subdomain, e.g. `mail.jimlackey.com`) in Resend's dashboard, add the
+SPF/DKIM DNS records it provides, then set `RESEND_FROM_EMAIL` in
+Vercel to an address on that verified domain. If this exact symptom
+resurfaces (works for the account owner, fails for everyone else),
+check the Resend domain/from-address config before assuming it's a
+code regression.
+
+---
+
+## 19. How to use this file
 
 Point a new Claude session at this file (paste it in, upload it, or — if
 using Claude Projects — add it to the project's knowledge so it's always

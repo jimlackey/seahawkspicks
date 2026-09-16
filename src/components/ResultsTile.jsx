@@ -61,21 +61,30 @@ export default function ResultsTile({ week, game, weekPicks, roster }) {
           return (
             <div className={`player-tile ${medalClass}`} key={id}>
               <div className="player-tile-name">{player.displayName}</div>
-              <div className="player-tile-score-row">
-                <span className="player-tile-score">
-                  {pick ? `${pick.hawks_score}–${pick.opp_score}` : isComplete ? "Missed" : "No pick yet"}
-                </span>
-                {predictedTotal != null && (
-                  <span className="player-tile-total">
-                    {predictedTotal} <span className="ou-tag">{predictedOu === "Push" ? "P" : predictedOu?.charAt(0) ?? ""}</span>
-                  </span>
-                )}
-              </div>
-              {isComplete && s && (
-                <div className="player-tile-diff">
-                  <span className={s.correctWinner ? "check-yes" : "check-no"}>{s.correctWinner ? "✓" : "✗"}</span> Diff{" "}
-                  {s.diff}
-                </div>
+              {pick ? (
+                <>
+                  <div className="player-tile-score-row">
+                    <TeamBadge fullName="Seattle Seahawks" compact />
+                    <span className="player-tile-score">
+                      {pick.hawks_score}&nbsp;-&nbsp;{pick.opp_score}
+                    </span>
+                    <TeamBadge fullName={opponent} compact />
+                  </div>
+                  <div className="player-tile-diff">
+                    {isComplete && s && (
+                      <>
+                        <span className={s.correctWinner ? "check-yes" : "check-no"}>
+                          {s.correctWinner ? "✓" : "✗"}
+                        </span>{" "}
+                        Diff {s.diff} ·{" "}
+                      </>
+                    )}
+                    {predictedTotal}{" "}
+                    <span className="ou-tag">{predictedOu === "Push" ? "P" : predictedOu?.charAt(0) ?? ""}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="player-tile-score">{isComplete ? "Missed" : "No pick yet"}</div>
               )}
             </div>
           );

@@ -400,30 +400,25 @@ button {
 
 .player-tile-score-row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 6px;
   flex-wrap: nowrap;
+  margin-bottom: 3px;
 }
 
 .player-tile-score {
   font-family: var(--display);
   font-weight: 700;
-  font-size: 17px;
+  font-size: 16px;
   color: var(--navy);
-  white-space: nowrap;
-}
-
-.player-tile-total {
-  font-size: 10.5px;
-  color: var(--grey);
   white-space: nowrap;
 }
 
 .player-tile-diff {
   font-size: 10.5px;
   color: var(--grey);
-  margin-top: 2px;
+  white-space: nowrap;
 }
 
 .check-yes {
