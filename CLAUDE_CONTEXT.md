@@ -34,26 +34,69 @@ original Google Sheet and validated against real 2025 season data
 (`src/lib/scoring.test.js` has the full regression test).
 
 - **Diff** = `|actual Hawks − picked Hawks| + |actual Opp − picked Opp|`
-- **1st place** (weekly winner) = lowest Diff **among players who
-  correctly picked the game's winner**. If nobody picked the winner
-  correctly that week, 1st falls back to lowest Diff overall.
-- **2nd/3rd** = remaining players ordered by Diff.
+- **Correctly picking the game's winner outranks Diff at every
+  position** (revised from the original sheet-derived rule — see
+  below), not just 1st place: every player who picked the correct
+  winner ranks above every player who didn't, period. Diff only breaks
+  ties within each of those two groups. If nobody picked the winner
+  correctly, ranking falls back to pure Diff for everyone.
 - **Missed pick** = worst Diff among the other players that week, **+1**
-  (guarantees last place). Confirmed against two real sheet rows with
-  blank score cells (both reproduced the sheet's diff exactly via this
-  formula — this is not a guess, it's verified).
+  (guarantees last place, and counts as an incorrect winner pick).
+  Confirmed against two real sheet rows with blank score cells (both
+  reproduced the sheet's diff exactly via this formula — this is not a
+  guess, it's verified).
 - **Standings**: 1st = 3 pts, 2nd = 1 pt, 3rd = 0 pts.
 
-**Known historical data issue, resolved**: Week 13 of the original sheet
-awarded 1st place to a player with a lower Diff but the *wrong* winner
-pick, over a player with a higher Diff but the *correct* winner pick —
-which violates the sheet's own documented rule (confirmed by two other
+**Rule revision, explicit user decision**: originally (matching the
+sheet's own apparent rule at the time), only **1st place** required the
+correct winner — 2nd/3rd were plain Diff order among whoever was left,
+regardless of their own winner-pick correctness. The user found this
+produced a real, live example they considered wrong: in the actual
+2026 season's Week 1 (Hawks won 13-10), Mark predicted the Patriots to
+win (wrong) but had the single best Diff (21) of the three players,
+which let him place 2nd over Jim, who correctly picked the Seahawks.
+The user's stated rule going forward: **if two players pick the
+Seahawks and one picks the opponent, the two Seahawks-pickers are
+eligible for 1st/2nd between themselves, and the opponent-picker is
+automatically 3rd — regardless of Diff.** `rankWeek()` now implements
+this as a straightforward two-key sort: `(correctWinner ? 0 : 1, diff)`
+ascending. This is simpler than the old implementation (which
+special-cased only the 1st-place slot), not more complex — don't
+revert to the old shape.
+
+**No data migration was needed for this change.** Results and
+Standings are computed live from `games`+`picks` on every page load
+(§16's point about no caching applies here too) — fixing `rankWeek` in
+the code immediately corrected every affected week, live Week 1
+included, on the next deploy. If a future session is asked to
+"recalculate" scores after a rule change like this, the answer is
+almost always "nothing to do beyond deploying the code fix" — there is
+no stored/cached ranking anywhere to go update.
+
+**Known historical data issue, resolved (independent of the rule
+revision above)**: Week 13 of the original 2025 sheet awarded 1st place
+to a player with a lower Diff but the *wrong* winner pick, over a
+player with a higher Diff but the *correct* winner pick — which
+violates the sheet's own documented rule (confirmed by two other
 weeks, 3 and 4, where the rule *was* applied correctly in the same
 situation shape). Conclusion: Week 13 was a manual tallying mistake in
-the original sheet. **User confirmed this explicitly.** The engine
-enforces the rule consistently and does NOT special-case Week 13 — if a
-future session sees the engine's output not match old sheet totals for
-that week, that's expected and correct, not a bug.
+the original sheet. **User confirmed this explicitly.** This
+conclusion holds under both the old and the revised ranking rule —
+only one player picked the winner correctly that week, so the
+"1st-place-only" vs. "every position" distinction doesn't apply there.
+The engine enforces the rule consistently and does NOT special-case
+Week 13.
+
+**A minor, non-load-bearing observation**: recomputing the full 17-week
+2025 regression dataset under the revised rule happens to produce
+totals (Mark 17, Brian 19, Jim 32) that exactly match the *original,
+uncorrected* sheet totals mentioned at the very start of this project
+— before the Week 13 fix was applied. This is noted in
+`scoring.test.js`'s comments as an interesting coincidence, not
+evidence that the sheet secretly used the revised rule all along or
+that the Week 13 conclusion needs revisiting; there's no per-week
+sheet breakdown to actually verify that against. Don't read more into
+it than that if it comes up again.
 
 **Over/Under is inferred, not manually picked.** `inferOverUnder` in
 `src/lib/scoring.js` compares predicted total (hawks + opp) to the

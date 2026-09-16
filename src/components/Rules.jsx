@@ -31,13 +31,13 @@ export default function Rules() {
       <section className="rules-section">
         <h2>Weekly ranking: 1st, 2nd, 3rd</h2>
         <p>
-          Lowest Diff wins the week — <strong>but only among players who correctly picked which team would
-          win.</strong> A low Diff doesn't count for 1st place if you had the wrong team winning outright. If
-          nobody picks the correct winner that week, 1st place just goes to the lowest Diff overall.
+          <strong>Correctly picking which team wins always outranks Diff</strong> — at every position, not
+          just 1st place. Every player who picked the winning team ranks above every player who didn't,
+          full stop. Diff only decides the order <em>within</em> each of those two groups. If nobody picks
+          the winner correctly, ranking falls back to pure Diff for everyone.
         </p>
-        <p>2nd and 3rd place are simply whoever's left, ordered by Diff.</p>
         <div className="rules-example">
-          <p className="rules-example-label">Example — actual final: Seahawks 20, Opponent 24 (Seahawks lost)</p>
+          <p className="rules-example-label">Example — actual final: Seahawks 13, Opponent 10 (Seahawks won)</p>
           <table className="rules-example-table">
             <thead>
               <tr>
@@ -50,33 +50,33 @@ export default function Rules() {
             </thead>
             <tbody>
               <tr>
+                <td>Brian</td>
+                <td>27–22</td>
+                <td>✓</td>
+                <td>26</td>
+                <td>🥇 1st</td>
+              </tr>
+              <tr>
                 <td>Jim</td>
-                <td>22–20</td>
-                <td>✗ (picked Hawks to win)</td>
-                <td>6</td>
+                <td>26–24</td>
+                <td>✓</td>
+                <td>27</td>
                 <td>2nd</td>
               </tr>
               <tr>
                 <td>Mark</td>
-                <td>16–21</td>
-                <td>✓</td>
-                <td>7</td>
-                <td>🥇 1st</td>
-              </tr>
-              <tr>
-                <td>Brian</td>
-                <td>10–30</td>
-                <td>✓</td>
-                <td>16</td>
+                <td>20–24</td>
+                <td>✗ (picked the opponent to win)</td>
+                <td>21</td>
                 <td>3rd</td>
               </tr>
             </tbody>
           </table>
           <p>
-            Jim had the single lowest Diff (6) of anyone — but he picked the Seahawks to win, and they lost.
-            That disqualifies him from 1st. Between the two players who correctly called the loss, Mark's Diff
-            of 7 is lower than Brian's 16, so <strong>Mark takes 1st</strong>. Jim still beats Brian on Diff, so
-            he takes 2nd.
+            Mark actually had the <strong>best</strong> Diff of the three (21) — but he predicted the
+            opponent to win, and the Seahawks won. That puts him behind both Brian and Jim regardless of
+            Diff. Between the two correct picks, Brian's Diff of 26 beats Jim's 27, so <strong>Brian takes
+            1st</strong> and Jim takes 2nd.
           </p>
         </div>
       </section>

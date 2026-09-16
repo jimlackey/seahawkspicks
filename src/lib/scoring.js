@@ -4,15 +4,17 @@
  * Pure, framework-free functions so this can be unit tested in isolation
  * and later imported directly into the React app.
  *
- * League rules (as documented in the original "Hawks Picks" sheet):
+ * League rules (as documented in the original "Hawks Picks" sheet, and
+ * revised once in the live app — see rankWeek below):
  *  - Diff = |actualHawks - pickedHawks| + |actualOpp - pickedOpp|
- *  - The weekly winner (1st place) must have correctly picked the game winner.
- *    Among players who did, the lowest Diff wins. If nobody picked the
- *    correct winner that week, 1st place falls back to the lowest Diff
- *    overall.
- *  - 2nd/3rd place are the remaining players ordered by Diff.
- *  - A missed pick (no submission) is scored as the worst Diff of the week
- *    among the other players, plus 1 — effectively guaranteeing last place.
+ *  - Correctly picking the game's winner outranks Diff at every
+ *    position, not just 1st place. Every player who picked the correct
+ *    winner ranks above every player who didn't, full stop — Diff only
+ *    breaks ties within each of those two groups. If nobody picked the
+ *    correct winner, ranking falls back to pure Diff for everyone.
+ *  - A missed pick (no submission) is scored as the worst Diff of the
+ *    week among the other players, plus 1, and counts as an incorrect
+ *    winner pick — effectively guaranteeing last place.
  *  - Standings points: 1st = 3, 2nd = 1, 3rd = 0.
  */
 
@@ -89,23 +91,27 @@ export function scoreWeek(weekPicks, actual) {
 
 /**
  * Ranks a scored week and returns { playerName: rank } where rank is 1, 2, or 3.
+ *
+ * Correctly picking the winner outranks Diff at every position: sort by
+ * (incorrect-winner-picks-last, then Diff ascending). This means, e.g.,
+ * two players who both picked the correct winner take 1st/2nd (ordered
+ * between themselves by Diff) ahead of a third player who picked the
+ * wrong winner, even if that third player's Diff is numerically better
+ * than one of theirs.
+ *
  * @param {Object} scored - output of scoreWeek()
  */
 export function rankWeek(scored) {
-  const players = Object.keys(scored);
-  const correctPickers = players.filter((p) => scored[p].correctWinner);
+  const ordered = Object.keys(scored).sort((a, b) => {
+    const groupA = scored[a].correctWinner ? 0 : 1;
+    const groupB = scored[b].correctWinner ? 0 : 1;
+    if (groupA !== groupB) return groupA - groupB;
+    return scored[a].diff - scored[b].diff;
+  });
 
-  const pool = correctPickers.length > 0 ? correctPickers : players;
-  const first = pool.reduce((best, p) =>
-    scored[p].diff < scored[best].diff ? p : best
-  , pool[0]);
-
-  const remaining = players.filter((p) => p !== first)
-    .sort((a, b) => scored[a].diff - scored[b].diff);
-
-  const ranks = { [first]: 1 };
-  remaining.forEach((p, i) => {
-    ranks[p] = i + 2; // 2nd, 3rd, ...
+  const ranks = {};
+  ordered.forEach((p, i) => {
+    ranks[p] = i + 1;
   });
   return ranks;
 }

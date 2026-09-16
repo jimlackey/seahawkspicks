@@ -65,13 +65,27 @@ test("scoreWeek applies the missed-pick penalty (worst diff + 1)", () => {
   assert.equal(scored.Jim.correctWinner, false);
 });
 
-test("rankWeek: correct-winner requirement overrides raw diff order", () => {
-  // Mirrors sheet Week 3: Jim has the lowest diff but picked the wrong
-  // winner; Brian has a higher diff but picked correctly, so Brian is 1st.
+test("rankWeek: correct-winner picks always outrank incorrect-winner picks, regardless of Diff", () => {
+  // Mirrors sheet Week 3: Mark and Brian both picked the correct winner,
+  // Jim picked wrong despite having the single lowest Diff of the three.
+  // Under the current rule, Jim's Diff doesn't matter — he ranks 3rd no
+  // matter what, and Mark/Brian split 1st/2nd between themselves by Diff.
   const scored = {
     Mark: { diff: 14, correctWinner: true, missed: false },
     Brian: { diff: 8, correctWinner: true, missed: false },
     Jim: { diff: 7, correctWinner: false, missed: false },
+  };
+  assert.deepEqual(rankWeek(scored), { Brian: 1, Mark: 2, Jim: 3 });
+});
+
+test("rankWeek: two correct-winner picks both outrank one incorrect pick with a better Diff", () => {
+  // The exact scenario that prompted this rule: two players pick the
+  // Seahawks (correct), one picks the opponent (wrong) — even though the
+  // wrong pick has the best raw Diff of the three, it still finishes 3rd.
+  const scored = {
+    Jim: { diff: 27, correctWinner: true, missed: false },
+    Brian: { diff: 26, correctWinner: true, missed: false },
+    Mark: { diff: 21, correctWinner: false, missed: false }, // best Diff, but wrong winner
   };
   assert.deepEqual(rankWeek(scored), { Brian: 1, Jim: 2, Mark: 3 });
 });
@@ -115,15 +129,24 @@ test("full season standings closely match the sheet's own totals", () => {
 
   const standings = computeSeasonStandings(weeks);
 
-  // Sheet's own totals: Mark 17, Brian 19, Jim 32.
-  // Engine reproduces Brian exactly. Mark/Jim are off by 2 points each
-  // (engine: Mark 15, Jim 34) traced to week 13, where the sheet awards
-  // 1st to Mark (lower diff, wrong winner) despite the documented
-  // "must correctly identify the winner" rule — which this engine
-  // enforces and which gives 1st to Jim (higher diff, correct winner)
-  // instead. This is flagged for the user rather than silently patched.
+  // These totals reflect the CURRENT rule (correct-winner always outranks
+  // Diff, at every position — not just 1st place). That rule was adopted
+  // after this test was first written; 4 of the 17 weeks here (3, 5, 17,
+  // 18) rank differently than they did under the original "1st place
+  // only" rule, which is why these numbers won't match an older version
+  // of this test or of hand-worked examples from that period.
+  //
+  // Week 13 is a separate, independent story: the original sheet's own
+  // tally gave 1st to Mark (lower Diff, wrong winner) over Jim (higher
+  // Diff, correct winner) — the sheet's own documented rule required
+  // Jim to win that week regardless of which rule-scope is used (only
+  // one player picked the winner correctly, so "1st place only" and
+  // "every position" agree there). That's a genuine sheet data-entry
+  // error, confirmed by two structurally identical weeks (3 and 4) where
+  // the rule *was* applied correctly, and the user explicitly confirmed
+  // Jim should have won. This test locks in Jim winning week 13.
   assert.deepEqual(
     { Mark: standings.Mark.points, Brian: standings.Brian.points, Jim: standings.Jim.points },
-    { Mark: 15, Brian: 19, Jim: 34 }
+    { Mark: 17, Brian: 19, Jim: 32 }
   );
 });
