@@ -1,5 +1,4 @@
-import { requireSession, POOL_SLUG } from "./_lib/requireAuth.js";
-import { getPoolBySlug } from "./_lib/pool.js";
+import { requireSession, getPoolOrFail } from "./_lib/requireAuth.js";
 import { supabaseAdmin } from "./_lib/supabaseAdmin.js";
 
 const SEASON = 2026;
@@ -8,11 +7,8 @@ export default async function handler(req, res) {
   // GET is public — schedule/scores are meant to be viewable by anyone,
   // logged in or not. Only writes require a session (checked below,
   // scoped to the PUT branch only).
-  const pool = await getPoolBySlug(POOL_SLUG);
-  if (!pool) {
-    res.status(500).json({ error: "Pool not found." });
-    return;
-  }
+  const pool = await getPoolOrFail(res);
+  if (!pool) return;
 
   if (req.method === "GET") {
     const { data, error } = await supabaseAdmin

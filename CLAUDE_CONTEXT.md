@@ -736,7 +736,41 @@ code regression.
 
 ---
 
-## 19. How to use this file
+## 19. "Pool not found" was a masked-error bug, not real missing data
+
+Symptom: intermittent "Couldn't load data: Pool not found" on every
+page (Picks/Results/Standings), happening occasionally while otherwise
+working fine. The pool obviously exists most of the time it works —
+this was never a real missing-pool situation.
+
+**Root cause**: `getPoolBySlug()` in `api/_lib/pool.js` destructured
+only `data` from the Supabase query, silently discarding `error`
+entirely. Any transient failure — a network blip, the Supabase project
+cold-starting after a period of inactivity (a real possibility on the
+free tier), a timeout — left `data` null exactly the same as a
+genuine "no such pool" case, so every failure mode got misreported as
+"Pool not found." This masked the actual, probably-transient cause
+from ever being visible.
+
+**Fix**: `getPoolBySlug` now checks the Supabase error's code —
+`PGRST116` (the real "no rows" signal from `.single()`) still returns
+null, but any other error throws with its real message instead of
+being swallowed. Every caller needed updating to handle that thrown
+case; consolidated into one shared helper, `getPoolOrFail(res)` in
+`requireAuth.js`, which resolves the pool and writes the appropriate
+error response (502 for a real failure, 500 for genuine not-found) —
+`requireSession` now calls it internally instead of duplicating the
+same try/catch, and `games.js`/`picks.js`/`roster.js`/every
+`auth/[action].js` sub-handler that needs the pool without a session
+call it directly. **If this exact symptom recurs**, the fix is already
+in place to surface the *real* error next time — check the actual
+message in the 502 response rather than assuming the pool is missing
+again, and check whether the Supabase project shows any cold-start/
+pause activity in its own dashboard around the time it happened.
+
+---
+
+## 20. How to use this file
 
 Point a new Claude session at this file (paste it in, upload it, or — if
 using Claude Projects — add it to the project's knowledge so it's always

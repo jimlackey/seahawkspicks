@@ -1,7 +1,21 @@
 import { supabaseAdmin } from "./supabaseAdmin.js";
 
+/**
+ * Looks up the pool by slug. Throws on a genuine query failure (network
+ * blip, Supabase project cold-starting after inactivity, timeout, etc.)
+ * instead of silently returning null for that case — silently coercing
+ * every failure mode into "not found" made a transient, recoverable
+ * error indistinguishable from an actually-missing pool, which is
+ * exactly the bug that caused intermittent "Pool not found" errors on
+ * every page even though the pool obviously exists most of the time.
+ * Only PGRST116 ("no rows", .single()'s real not-found signal) returns
+ * null; every other error propagates with its real message.
+ */
 export async function getPoolBySlug(slug) {
-  const { data } = await supabaseAdmin.from("pools").select("*").eq("slug", slug).single();
+  const { data, error } = await supabaseAdmin.from("pools").select("*").eq("slug", slug).single();
+  if (error && error.code !== "PGRST116") {
+    throw new Error(`Pool lookup failed: ${error.message}`);
+  }
   return data ?? null;
 }
 

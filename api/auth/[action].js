@@ -8,7 +8,6 @@
 
 import { randomBytes } from "crypto";
 import {
-  getPoolBySlug,
   isEmailWhitelisted,
   getPoolAdminEmails,
   createAccessRequest,
@@ -16,6 +15,7 @@ import {
   findOrCreateMembership,
   grantAccessByToken,
 } from "../_lib/pool.js";
+import { getPoolOrFail } from "../_lib/requireAuth.js";
 import { checkOtpRateLimit, createOtpRequest, verifyOtp } from "../_lib/otp.js";
 import { createPoolSession, getPoolSession, destroyPoolSession } from "../_lib/session.js";
 import { sendOtpEmail, sendAccessRequestEmail } from "../_lib/resend.js";
@@ -55,11 +55,8 @@ async function requestCode(req, res) {
     return;
   }
 
-  const pool = await getPoolBySlug(POOL_SLUG);
-  if (!pool) {
-    res.status(500).json({ error: "Pool not found. Has the schema been seeded?" });
-    return;
-  }
+  const pool = await getPoolOrFail(res);
+  if (!pool) return;
 
   const whitelisted = await isEmailWhitelisted(pool.id, email);
   if (!whitelisted) {
@@ -99,11 +96,8 @@ async function verifyCode(req, res) {
     return;
   }
 
-  const pool = await getPoolBySlug(POOL_SLUG);
-  if (!pool) {
-    res.status(500).json({ error: "Pool not found." });
-    return;
-  }
+  const pool = await getPoolOrFail(res);
+  if (!pool) return;
 
   const result = await verifyOtp(email, pool.id, String(code));
   if (!result.valid) {
@@ -135,11 +129,8 @@ async function verifyCode(req, res) {
 }
 
 async function me(req, res) {
-  const pool = await getPoolBySlug(POOL_SLUG);
-  if (!pool) {
-    res.status(500).json({ error: "Pool not found." });
-    return;
-  }
+  const pool = await getPoolOrFail(res);
+  if (!pool) return;
 
   const session = await getPoolSession(req, pool.id, POOL_SLUG);
   if (!session) {
@@ -178,11 +169,8 @@ async function requestAccess(req, res) {
     return;
   }
 
-  const pool = await getPoolBySlug(POOL_SLUG);
-  if (!pool) {
-    res.status(500).json({ error: "Pool not found." });
-    return;
-  }
+  const pool = await getPoolOrFail(res);
+  if (!pool) return;
 
   const allowed = await checkOtpRateLimit(email, pool.id);
   if (!allowed) {
