@@ -1,5 +1,9 @@
 import { supabaseAdmin } from "./supabaseAdmin.js";
 
+async function queryPool(slug) {
+  return supabaseAdmin.from("pools").select("*").eq("slug", slug).single();
+}
+
 /**
  * Looks up the pool by slug. Throws on a genuine query failure (network
  * blip, Supabase project cold-starting after inactivity, timeout, etc.)
@@ -10,12 +14,33 @@ import { supabaseAdmin } from "./supabaseAdmin.js";
  * every page even though the pool obviously exists most of the time.
  * Only PGRST116 ("no rows", .single()'s real not-found signal) returns
  * null; every other error propagates with its real message.
+ *
+ * PGRST303 ("JWT issued at future") gets one automatic retry after a
+ * short delay before that: this is a confirmed, currently-active
+ * Supabase platform bug (clock skew between their Auth service and
+ * PostgREST, occurring even with the new sb_secret_ key format — see
+ * CLAUDE_CONTEXT.md), not anything wrong with this project's config or
+ * code. If it's still failing after the retry, that's surfaced as a
+ * plain "the database is temporarily unhealthy" message rather than the
+ * raw PGRST303 text, since there's nothing actionable on our end to
+ * tell the user beyond "try again shortly."
  */
 export async function getPoolBySlug(slug) {
-  const { data, error } = await supabaseAdmin.from("pools").select("*").eq("slug", slug).single();
+  let { data, error } = await queryPool(slug);
+
+  if (error && error.code === "PGRST303") {
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    ({ data, error } = await queryPool(slug));
+  }
+
+  if (error && error.code === "PGRST303") {
+    throw new Error("The database service is temporarily unhealthy. Please refresh and try again shortly.");
+  }
+
   if (error && error.code !== "PGRST116") {
     throw new Error(`Pool lookup failed: ${error.message}`);
   }
+
   return data ?? null;
 }
 

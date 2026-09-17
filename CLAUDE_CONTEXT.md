@@ -762,11 +762,35 @@ error response (502 for a real failure, 500 for genuine not-found) —
 `requireSession` now calls it internally instead of duplicating the
 same try/catch, and `games.js`/`picks.js`/`roster.js`/every
 `auth/[action].js` sub-handler that needs the pool without a session
-call it directly. **If this exact symptom recurs**, the fix is already
-in place to surface the *real* error next time — check the actual
-message in the 502 response rather than assuming the pool is missing
-again, and check whether the Supabase project shows any cold-start/
-pause activity in its own dashboard around the time it happened.
+call it directly.
+
+**Follow-up, once the real error became visible**: it turned out to be
+`PGRST303` ("JWT issued at future") — a confirmed, currently-active
+**Supabase platform bug**, not anything in this codebase. Verified
+directly against Supabase's own GitHub issue tracker: issue #49655
+(opened Aug 27, 2026) is titled exactly "PGRST303 'JWT issued at
+future' on REST requests using the new sb_secret_ key (not a legacy
+JWT key)" — i.e. this project's exact key setup. It's clock skew
+between Supabase's Auth service and PostgREST, not a config problem on
+our end. A PostgREST fix (v14.17→v14.18) merged Sep 12, 2026 — days
+before this was hit — so Supabase's rollout was likely still in
+progress. **Mitigation added** (`getPoolBySlug` in `pool.js`): one
+automatic retry after an 800ms delay, specifically scoped to
+`error.code === "PGRST303"` — no other error code triggers a retry,
+since retrying a genuine error would just waste time and could mask a
+real problem. If the retry also fails, it throws a plain "The database
+service is temporarily unhealthy. Please refresh and try again
+shortly." instead of the raw PGRST303 text, since there's nothing more
+specific or actionable to tell the user. Verified via a mocked-query
+simulation (retry-then-succeed, retry-exhausted, and no-retry-for-
+other-error-codes) rather than against real Supabase, since this
+sandbox can't reach it and the error is inherently intermittent/
+unreproducible on demand anyway.
+
+**If this resurfaces after Supabase's fix should have fully rolled
+out**: don't assume the retry logic itself is broken — check whether
+it's genuinely still PGRST303 (Supabase-side) or a new, different
+error code before touching this file again.
 
 ---
 
