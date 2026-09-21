@@ -3,17 +3,27 @@ import TeamBadge from "./TeamBadge.jsx";
 import { formatLine } from "../lib/format.js";
 import { syncOdds, syncScore, syncGame } from "../lib/db.js";
 
-export default function AdminGameRow({ week, game, showOddsButton, onSynced }) {
-  const [oddsBusy, setOddsBusy] = useState(false);
-  const [scoreBusy, setScoreBusy] = useState(false);
-  const [oddsStatus, setOddsStatus] = useState(null); // {ok, msg}
-  const [scoreStatus, setScoreStatus] = useState(null);
+export default function AdminGameRow({ week, game, updateAction, onSynced }) {
+  const [updateBusy, setUpdateBusy] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState(null); // {ok, msg}
 
   const [editingLine, setEditingLine] = useState(false);
   const [spreadInput, setSpreadInput] = useState("");
   const [totalInput, setTotalInput] = useState("");
   const [lineSaving, setLineSaving] = useState(false);
   const [lineError, setLineError] = useState(null);
+
+  const [editingScore, setEditingScore] = useState(false);
+  const [hawksInput, setHawksInput] = useState("");
+  const [oppInput, setOppInput] = useState("");
+  const [scoreSaving, setScoreSaving] = useState(false);
+  const [scoreError, setScoreError] = useState(null);
+
+  // Manual overrides need real schedule data (opponent/home/kickoff time)
+  // to exist first — without it, a write would have to either guess those
+  // required fields or fail outright. So they're only offered once a
+  // schedule row exists for this week.
+  const hasSchedule = Boolean(game);
 
   const home = game?.home;
   const opponent = game?.opponent ?? null;
@@ -61,34 +71,62 @@ export default function AdminGameRow({ week, game, showOddsButton, onSynced }) {
     }
   }
 
-  async function handleUpdateOdds() {
-    setOddsBusy(true);
-    setOddsStatus(null);
+  function startEditScore() {
+    setHawksInput(game?.hawks_score != null ? String(game.hawks_score) : "");
+    setOppInput(game?.opp_score != null ? String(game.opp_score) : "");
+    setScoreError(null);
+    setEditingScore(true);
+  }
+
+  async function handleSaveScore(e) {
+    e.preventDefault();
+    const hawksEmpty = hawksInput.trim() === "";
+    const oppEmpty = oppInput.trim() === "";
+    if (hawksEmpty !== oppEmpty) {
+      setScoreError("Enter both scores, or clear both to reset.");
+      return;
+    }
+    setScoreSaving(true);
+    setScoreError(null);
     try {
-      await syncOdds(week, opponent);
-      setOddsStatus({ ok: true, msg: "Updated" });
+      // Same idea as the Line override: a direct write, no API call, so
+      // a wrong final score (or one that needs a post-hoc correction)
+      // can always be fixed by hand. Clearing both fields resets the
+      // week to not-yet-played rather than leaving a stale score behind.
+      await syncGame({
+        week,
+        hawksScore: hawksEmpty ? null : Number(hawksInput),
+        oppScore: oppEmpty ? null : Number(oppInput),
+        completed: !hawksEmpty,
+      });
+      setEditingScore(false);
       onSynced?.();
     } catch (err) {
-      setOddsStatus({ ok: false, msg: err.message });
+      setScoreError(err.message);
     } finally {
-      setOddsBusy(false);
+      setScoreSaving(false);
     }
   }
 
-  async function handleUpdateScore() {
-    setScoreBusy(true);
-    setScoreStatus(null);
+  async function handleUpdateClick() {
+    setUpdateBusy(true);
+    setUpdateStatus(null);
     try {
-      const data = await syncScore(week, opponent);
-      setScoreStatus({
-        ok: true,
-        msg: data.completed ? `Final ${data.hawksScore}-${data.oppScore}` : "Not final yet",
-      });
+      if (updateAction === "odds") {
+        await syncOdds(week, opponent);
+        setUpdateStatus({ ok: true, msg: "Updated" });
+      } else if (updateAction === "score") {
+        const data = await syncScore(week, opponent);
+        setUpdateStatus({
+          ok: true,
+          msg: data.completed ? `Final ${data.hawksScore}-${data.oppScore}` : "Not final yet",
+        });
+      }
       onSynced?.();
     } catch (err) {
-      setScoreStatus({ ok: false, msg: err.message });
+      setUpdateStatus({ ok: false, msg: err.message });
     } finally {
-      setScoreBusy(false);
+      setUpdateBusy(false);
     }
   }
 
@@ -131,33 +169,62 @@ export default function AdminGameRow({ week, game, showOddsButton, onSynced }) {
         ) : (
           <>
             {lineText}{" "}
-            <button type="button" className="ag-edit-link" onClick={startEditLine} title="Manually set spread/total">
-              ✎
-            </button>
-          </>
-        )}
-      </td>
-      <td className="ag-final">{finalText}</td>
-      <td className="ag-action">
-        {showOddsButton ? (
-          <>
-            <button className="ag-btn" onClick={handleUpdateOdds} disabled={oddsBusy}>
-              {oddsBusy ? "…" : "Update Odds"}
-            </button>
-            {oddsStatus && (
-              <div className={`ag-status ${oddsStatus.ok ? "ag-status-ok" : "ag-status-err"}`}>{oddsStatus.msg}</div>
+            {hasSchedule && (
+              <button type="button" className="ag-edit-link" onClick={startEditLine} title="Manually set spread/total">
+                ✎
+              </button>
             )}
           </>
+        )}
+      </td>
+      <td className="ag-final">
+        {editingScore ? (
+          <form onSubmit={handleSaveScore} className="ag-line-edit">
+            <input
+              type="number"
+              placeholder="SEA"
+              value={hawksInput}
+              onChange={(e) => setHawksInput(e.target.value)}
+            />
+            <input
+              type="number"
+              placeholder="Opp"
+              value={oppInput}
+              onChange={(e) => setOppInput(e.target.value)}
+            />
+            <div className="ag-line-edit-actions">
+              <button type="submit" className="ag-btn" disabled={scoreSaving}>
+                {scoreSaving ? "…" : "Save"}
+              </button>
+              <button type="button" className="ag-btn" onClick={() => setEditingScore(false)} disabled={scoreSaving}>
+                Cancel
+              </button>
+            </div>
+            {scoreError && <div className="ag-status ag-status-err">{scoreError}</div>}
+          </form>
         ) : (
-          <span className="ag-na">—</span>
+          <>
+            {finalText}{" "}
+            {hasSchedule && (
+              <button type="button" className="ag-edit-link" onClick={startEditScore} title="Manually set final score">
+                ✎
+              </button>
+            )}
+          </>
         )}
       </td>
       <td className="ag-action">
-        <button className="ag-btn" onClick={handleUpdateScore} disabled={scoreBusy}>
-          {scoreBusy ? "…" : "Update Score"}
-        </button>
-        {scoreStatus && (
-          <div className={`ag-status ${scoreStatus.ok ? "ag-status-ok" : "ag-status-err"}`}>{scoreStatus.msg}</div>
+        {updateAction && (
+          <>
+            <button className="ag-btn" onClick={handleUpdateClick} disabled={updateBusy}>
+              {updateBusy ? "…" : updateAction === "odds" ? "Odds" : "Score"}
+            </button>
+            {updateStatus && (
+              <div className={`ag-status ${updateStatus.ok ? "ag-status-ok" : "ag-status-err"}`}>
+                {updateStatus.msg}
+              </div>
+            )}
+          </>
         )}
       </td>
     </tr>

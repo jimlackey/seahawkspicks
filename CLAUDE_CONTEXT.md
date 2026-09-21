@@ -672,8 +672,36 @@ sync button.
   involved at all, a pure direct write. An emptied field writes `null`
   explicitly (clears that value) rather than being left untouched,
   so this can also fix a bad prior auto-sync, not just fill in blanks.
-  Available on every week, not just the "relevant" one Update Odds is
-  restricted to.
+- **Same manual override added for the final score**, as an explicit
+  safety measure, mirroring the Line override exactly (two inputs —
+  Hawks score, opponent score — via the same `syncGame()`, no API
+  call). Clearing both fields resets the week to `completed: false`
+  (not just blank scores) rather than leaving a stale `completed: true`
+  behind; entering only one of the two fields is rejected client-side
+  with a clear message rather than silently saving a half-set score.
+- **Both manual overrides require a schedule row to already exist**
+  (`hasSchedule = Boolean(game)`) — without one, there's no
+  opponent/home/commence_time to satisfy the NOT NULL insert path
+  (§16's "real root cause" fix), so the ✎ icons simply don't render
+  for a week with no schedule data yet (week 18, currently).
+- **Odds/Score buttons consolidated into one "Update" column**,
+  replacing the separate always-present Score button and the
+  restricted-to-one-week Odds button, per explicit per-row rules:
+  a completed week always shows a "Score" button (works on any past
+  week, not just the most recent — same reasoning as before); the one
+  "next upcoming" week (earliest with a game row that isn't completed)
+  shows "Odds" if its kickoff hasn't passed yet; that same next-upcoming
+  week shows **nothing** once kickoff has passed but before it's marked
+  completed (a live/in-progress game) — specifically to prevent the
+  exact mistake that prompted this whole feature (pulling live in-game
+  odds instead of the closing line); every other week (future, beyond
+  next) shows nothing. `AdminGamesTable.jsx`'s `getUpdateAction(week,
+  game)` computes this per row; `AdminGameRow.jsx` just renders based
+  on that string (`"odds"` | `"score"` | `null`) rather than two
+  separate boolean props. The manual ✎ overrides are deliberately
+  **not** gated by these same rules — they stay available on every
+  scheduled week regardless of game state, since bypassing the
+  automated rules entirely is the whole point of having them.
 - **No separate "recalculate" step exists or is needed.** Results and
   Standings are pure functions computed live from whatever's currently
   in `games`+`picks` (`scoreWeek`/`rankWeek`/`computeSeasonStandings`,

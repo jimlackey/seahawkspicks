@@ -36,16 +36,32 @@ export default function AdminGamesTable({ onGamesChanged }) {
   const weeks = Array.from({ length: TOTAL_WEEKS }, (_, i) => i + 1);
 
   // The Odds API's /odds endpoint only ever returns whatever the
-  // Seahawks' current (next unplayed) game is — it has no concept of
-  // "week number" and can't serve historical closing lines for games
-  // already played. So "Update Odds" only ever does anything useful for
-  // the earliest week that has a game and hasn't completed yet; showing
-  // it anywhere else just guarantees the opponent-mismatch safety check
-  // (see db.js's syncOdds) rejects the write.
-  const relevantOddsWeek = weeks.find((w) => {
+  // Seahawks' current (next unplayed) game is — no per-week lookup, no
+  // historical closing lines for games already played. "nextWeek" is
+  // the one week that endpoint can actually answer for.
+  const nextWeek = weeks.find((w) => {
     const g = gamesByWeek[w];
     return g && !g.completed;
   });
+
+  /**
+   * What the single "Update" button should do for a given row, per the
+   * user's explicit rules:
+   *  - completed game -> "score" (lets a wrong final score be corrected,
+   *    on ANY past week, not just the most recent one)
+   *  - not the next upcoming week -> nothing (either already-covered by
+   *    the completed case above, or a future week with nothing to fetch)
+   *  - next upcoming week, not yet kicked off -> "odds"
+   *  - next upcoming week, kicked off but not yet marked completed
+   *    (game in progress) -> nothing, specifically to avoid pulling
+   *    live in-game odds over the closing line
+   */
+  function getUpdateAction(week, game) {
+    if (game?.completed) return "score";
+    if (week !== nextWeek) return null;
+    const started = game?.commence_time ? new Date(game.commence_time) <= new Date() : false;
+    return started ? null : "odds";
+  }
 
   return (
     <div>
@@ -59,8 +75,7 @@ export default function AdminGamesTable({ onGamesChanged }) {
               <th>Away</th>
               <th>Line</th>
               <th>Final</th>
-              <th>Odds</th>
-              <th>Score</th>
+              <th>Update</th>
             </tr>
           </thead>
           <tbody>
@@ -69,7 +84,7 @@ export default function AdminGamesTable({ onGamesChanged }) {
                 key={week}
                 week={week}
                 game={gamesByWeek[week] ?? null}
-                showOddsButton={week === relevantOddsWeek}
+                updateAction={getUpdateAction(week, gamesByWeek[week])}
                 onSynced={handleSynced}
               />
             ))}
