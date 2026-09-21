@@ -659,6 +659,21 @@ sync button.
   everywhere else). Update Score has no equivalent restriction — it
   works for any recently-completed game within the 3-day window (§3),
   which is why it stays available on every past week.
+- **Manual spread/total override** (follow-up, once the user hit
+  another real limitation): clicking Update Odds *during* a live game
+  pulls in-game/live odds instead of the closing line — there's no way
+  to ask the Odds API for "the line as of kickoff" after the fact
+  without a **paid** subscription (confirmed directly against The Odds
+  API's own docs: "Historical odds data is only available for paid
+  subscriptions" — this project is on the free tier). Added a ✎ edit
+  affordance directly on the Line cell in `AdminGameRow.jsx`: reveals
+  two plain number inputs (spread, total) pre-filled with the current
+  values, saved via the existing `syncGame()` in `db.js` — no API call
+  involved at all, a pure direct write. An emptied field writes `null`
+  explicitly (clears that value) rather than being left untouched,
+  so this can also fix a bad prior auto-sync, not just fill in blanks.
+  Available on every week, not just the "relevant" one Update Odds is
+  restricted to.
 - **No separate "recalculate" step exists or is needed.** Results and
   Standings are pure functions computed live from whatever's currently
   in `games`+`picks` (`scoreWeek`/`rankWeek`/`computeSeasonStandings`,

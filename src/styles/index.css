@@ -572,6 +572,40 @@ button {
   font-size: 12.5px;
 }
 
+.ag-edit-link {
+  background: none;
+  border: none;
+  color: var(--grey);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0;
+  margin-left: 2px;
+}
+
+.ag-edit-link:hover {
+  color: var(--navy);
+}
+
+.ag-table .ag-line-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  white-space: normal;
+}
+
+.ag-line-edit input {
+  width: 64px;
+  font-size: 12px;
+  padding: 3px 5px;
+  border: 1px solid var(--grey-light);
+  border-radius: 3px;
+}
+
+.ag-line-edit-actions {
+  display: flex;
+  gap: 4px;
+}
+
 .ag-btn {
   font-size: 12px;
   color: var(--navy);
