@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { inferOverUnder } from "../lib/scoring.js";
+import { inferOverUnder, pickedCorrectWinner } from "../lib/scoring.js";
 import { formatKickoff, formatLine } from "../lib/format.js";
 import TeamBadge from "./TeamBadge.jsx";
 
@@ -63,6 +63,17 @@ export default function PickRow({ week, game, existingPick, onSave }) {
   const predictedTotal = bothValid ? hawksNum + oppNum : null;
   const predictedOu = bothValid ? inferOverUnder({ hawks: hawksNum, opp: oppNum }, game?.total ?? null) : null;
 
+  // Result coloring for completed games (green = right, red = wrong).
+  const isComplete = !!game?.completed && game.hawks_score != null && game.opp_score != null;
+  let winnerClass = "";
+  let ouClass = "";
+  if (isComplete && bothValid) {
+    const actual = { hawks: game.hawks_score, opp: game.opp_score };
+    winnerClass = pickedCorrectWinner(actual, { hawks: hawksNum, opp: oppNum }) ? "pick-correct" : "pick-wrong";
+    const actualOu = inferOverUnder(actual, game.total ?? null);
+    if (predictedOu && actualOu) ouClass = predictedOu === actualOu ? "pick-correct" : "pick-wrong";
+  }
+
   return (
     <tr className={locked ? "locked" : ""}>
       <td className="col-week">{week}</td>
@@ -74,7 +85,7 @@ export default function PickRow({ week, game, existingPick, onSave }) {
         <TeamBadge fullName={awayTeamName} />
       </td>
       <td className="col-line">{lineText}</td>
-      <td className="col-pick">
+      <td className={`col-pick ${winnerClass}`}>
         <input
           type="number"
           inputMode="numeric"
@@ -85,7 +96,7 @@ export default function PickRow({ week, game, existingPick, onSave }) {
           aria-label={`Week ${week} predicted Seahawks score`}
         />
       </td>
-      <td className="col-pick">
+      <td className={`col-pick ${winnerClass}`}>
         <input
           type="number"
           inputMode="numeric"
@@ -99,7 +110,7 @@ export default function PickRow({ week, game, existingPick, onSave }) {
       <td className="col-total">
         {predictedTotal != null ? (
           <span>
-            {predictedTotal} <span className="ou-tag">{predictedOu === "Push" ? "P" : predictedOu?.charAt(0) ?? ""}</span>
+            {predictedTotal} <span className={`ou-tag ${ouClass}`}>{predictedOu === "Push" ? "P" : predictedOu?.charAt(0) ?? ""}</span>
           </span>
         ) : (
           "—"

@@ -194,6 +194,20 @@ button {
   color: var(--grey);
 }
 
+.picks-table .col-pick.pick-correct input:disabled,
+.picks-table tr.locked td .ou-tag.pick-correct {
+  color: var(--green);
+  -webkit-text-fill-color: var(--green);
+  font-weight: 700;
+}
+
+.picks-table .col-pick.pick-wrong input:disabled,
+.picks-table tr.locked td .ou-tag.pick-wrong {
+  color: #c0392b;
+  -webkit-text-fill-color: #c0392b;
+  font-weight: 700;
+}
+
 .picks-table .col-pick input:focus-visible {
   outline: 2px solid var(--green);
   outline-offset: 1px;

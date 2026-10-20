@@ -39,7 +39,10 @@ export default function PicksGrid({ games, myPicks, onSavePick }) {
       <p className="picks-legend">
         <span className="ou-tag">O</span> Over · <span className="ou-tag">U</span> Under ·{" "}
         <span className="ou-tag">P</span> Push — computed from your picked scores vs. the total line, for
-        reference only.
+        reference only. On completed games,{" "}
+        <span style={{ color: "var(--green)", fontWeight: 700 }}>green</span> /{" "}
+        <span style={{ color: "#c0392b", fontWeight: 700 }}>red</span> shows whether you picked the winner
+        (scores) and the over/under (O/U/P).
       </p>
     </div>
   );
