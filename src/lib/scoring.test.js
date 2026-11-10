@@ -150,3 +150,34 @@ test("full season standings closely match the sheet's own totals", () => {
     { Mark: 17, Brian: 19, Jim: 32 }
   );
 });
+
+test("rankWeek: identical Diff and winner status share a rank (ties)", () => {
+  const tiedFirst = {
+    Brian: { diff: 5, correctWinner: true, missed: false },
+    Jim: { diff: 5, correctWinner: true, missed: false },
+    Mark: { diff: 9, correctWinner: true, missed: false },
+  };
+  assert.deepEqual(rankWeek(tiedFirst), { Brian: 1, Jim: 1, Mark: 3 });
+  const tiedSecond = {
+    Brian: { diff: 2, correctWinner: true, missed: false },
+    Jim: { diff: 7, correctWinner: true, missed: false },
+    Mark: { diff: 7, correctWinner: true, missed: false },
+  };
+  assert.deepEqual(rankWeek(tiedSecond), { Brian: 1, Jim: 2, Mark: 2 });
+});
+
+test("computeSeasonStandings: tied players each receive the full points for the shared rank", () => {
+  const actual = { hawks: 20, opp: 10 };
+  const s1 = computeSeasonStandings([
+    { actual, picks: { Brian: { hawks: 21, opp: 10 }, Jim: { hawks: 19, opp: 10 }, Mark: { hawks: 30, opp: 10 } } },
+  ]);
+  assert.equal(s1.Brian.points, 3);
+  assert.equal(s1.Jim.points, 3);
+  assert.equal(s1.Mark.points, 0);
+  const s2 = computeSeasonStandings([
+    { actual, picks: { Brian: { hawks: 20, opp: 10 }, Jim: { hawks: 22, opp: 10 }, Mark: { hawks: 18, opp: 10 } } },
+  ]);
+  assert.equal(s2.Brian.points, 3);
+  assert.equal(s2.Jim.points, 1);
+  assert.equal(s2.Mark.points, 1);
+});

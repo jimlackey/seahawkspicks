@@ -36,6 +36,12 @@ export default function Rules() {
           full stop. Diff only decides the order <em>within</em> each of those two groups. If nobody picks
           the winner correctly, ranking falls back to pure Diff for everyone.
         </p>
+        <p>
+          <strong>Ties share the rank.</strong> If two players are in the same group with the exact same
+          Diff, they tie and each gets the full points for that place — two players tied for 1st both earn{" "}
+          {STANDINGS_POINTS[1]} points (and the next player is 3rd); two players tied for 2nd both earn{" "}
+          {STANDINGS_POINTS[2]} point.
+        </p>
         <div className="rules-example">
           <p className="rules-example-label">Example — actual final: Seahawks 13, Opponent 10 (Seahawks won)</p>
           <table className="rules-example-table">

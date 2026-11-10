@@ -109,9 +109,12 @@ export function rankWeek(scored) {
     return scored[a].diff - scored[b].diff;
   });
 
+  // Standard competition ranking: players with the same (winner-group, Diff)
+  // share a rank, and the next rank skips (1, 1, 3 / 1, 2, 2).
+  const key = (p) => `${scored[p].correctWinner ? 0 : 1}:${scored[p].diff}`;
   const ranks = {};
   ordered.forEach((p, i) => {
-    ranks[p] = i + 1;
+    ranks[p] = i > 0 && key(p) === key(ordered[i - 1]) ? ranks[ordered[i - 1]] : i + 1;
   });
   return ranks;
 }
